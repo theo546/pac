@@ -9,6 +9,8 @@ Save it as /usr/bin/pac
 Allow execution: chmod +x /usr/bin/pac
 
 # Change log
+1.0.3_1 fixed a bad string
+
 1.0.3 added log system, changed folder of cache to ~/.cache/pac, changed a lot of things.
 
 1.0.2 added check if the system is on Archlinux, check for pacman and git, and changed some stuff.
