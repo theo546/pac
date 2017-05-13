@@ -4,7 +4,7 @@
 # please, credit me if you use my tool, enjoy :D
 # https://github.com/theo546/pac
 
-version="1.0.4_2" # changelog: https://github.com/theo546/pac/blob/master/README.md
+version="1.0.4_3" # changelog: https://github.com/theo546/pac/blob/master/README.md
 log=$HOME/.cache/pac/logs/log-$(date +%Y-%m-%d_%H-%M-%S).txt # log directory
 
 if [ ! -f ~/.cache/pac/pac.config ]; then
@@ -107,12 +107,12 @@ if [ $1 == "u" ];
 	sudo pacman -Syu
 	if [ $autoupdate == 1 ];
 	   then
-		echo "Checking update for pac..."
+		echo -n "Checking update for pac..."
 		content=$(wget https://raw.githubusercontent.com/theo546/pac/master/pac/version -q -O -)
 		if [ $content != $version ];
 		   then
 			rdname=$tmpdirectory/$RANDOM-pac
-			echo "New update for pac found! (current: $version, update: $content)"
+			echo " New update for pac found! (current: $version, update: $content)"
 			wget https://raw.githubusercontent.com/theo546/pac/master/pac/pac -q -O $rdname
 			if [ ! -f $rdname ];
 			   then
@@ -120,20 +120,28 @@ if [ $1 == "u" ];
 				rm $rdname 2> /dev/null
 				exit
 			   fi
-			echo "Checking checksum of the new version..."
+			echo -n "Checking checksum of the new version..."
 			sha512=$(wget https://raw.githubusercontent.com/theo546/pac/master/pac/sha512sum -q -O -)
 			sha512dl=$(sha512sum "$rdname" | cut -d ' ' -f 1)
-			if [ $sha512 != $sha512dl ];
+			if [ $sha512 == ] 2> /dev/null;
 			   then
-				echo "Error: update fail, file is corrupt/modified, aborting..."
+				echo " Error: can't get the checksum, aborting..."
+				rm $rdname
+				exit
+			   fi
+			if [ $sha512 != "3dzqdqzzd" ];
+			   then
+				echo " Error: update fail, file is corrupt/modified, aborting..."
 				echo "Checksum of the update: $sha512"
 				echo "Checksum of the downloaded file: $sha512dl"
 				rm $rdname
 				exit
 			   else sudo rm /usr/bin/pac; sudo mv $rdname /usr/bin/pac; sudo chmod +x /usr/bin/pac
 			fi
-			echo "Update successfully checked and installed!"
-			else echo "No update found!"
+			echo $sha512
+			echo $sha512dl
+			echo " [OK]"; echo "Update successfully checked and installed!"
+			else echo " No update found!"
 		   fi
 	   fi
 	exit
