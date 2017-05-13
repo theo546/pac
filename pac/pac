@@ -4,7 +4,7 @@
 # please, credit me if you use my tool, enjoy :D
 # https://github.com/theo546/pac
 
-version="1.0.4" # changelog: https://github.com/theo546/pac/blob/master/README.md
+version="1.0.4_1" # changelog: https://github.com/theo546/pac/blob/master/README.md
 log=$HOME/.cache/pac/logs/log-$(date +%Y-%m-%d_%H-%M-%S).txt # log directory
 
 if [ ! -f ~/.cache/pac/pac.config ]; then
@@ -41,6 +41,10 @@ if [ ! -f ~/.cache/pac/pac.config ];
 	echo "pacfolder="$HOME/.cache/pac" # don't touch!!!" >> ~/.cache/pac/pac.config
 	sleep 0.1
 	. ~/.cache/pac/pac.config
+   fi
+if [ ! -f ~/.cache/pac/db.txt ];
+   then
+	touch ~/.cache/pac/db.txt
    fi
 # check config
 if [ $pacfolder ==  ] 2> /dev/null;
