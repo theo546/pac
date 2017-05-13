@@ -26,6 +26,8 @@ Save it as /usr/bin/pac
 Allow execution: chmod +x /usr/bin/pac
 
 # Change log
+1.0.4_1 fixed output about db.txt on the first launch
+
 1.0.4 added verification and ask the user if he wan't to install the previously downloaded package(aur)
   now, pac have config files, in ~/.cache/pac/pac.config, autoupdate can now be set
 
