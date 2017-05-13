@@ -1,15 +1,15 @@
 #!/bin/bash
 
 # pac tool by theo546: https://github.com/theo546
-# please, credit me if you use my tools :D
+# please, credit me if you use my tool, enjoy :D
 # https://github.com/theo546/pac
 
-version="1.0.3_2" # changelog: https://github.com/theo546/pac/blob/master/README.md
-tmpdirectory="/tmp" # change this only if you can't write in the /tmp directory.
-checkos=1 # put this on 0 if this fail and you are really on Archlinux.
+version="1.0.4" # changelog: https://github.com/theo546/pac/blob/master/README.md
 log=$HOME/.cache/pac/logs/log-$(date +%Y-%m-%d_%H-%M-%S).txt # log directory
 
-if [ $checkos == 1 ]; # i add this here to prevent the creation of the cache folder if not on Archlinux.
+if [ ! -f ~/.cache/pac/pac.config ]; then
+	checkos=1; else . ~/.cache/pac/pac.config; fi # change checkos to 0 if error when starting
+if [ $checkos == 1 ] 2> /dev/null; # i add this here to prevent the creation of the cache folder if not on Archlinux.
    then
 	if [ ! -f /etc/arch-release ];
 	   then
@@ -29,21 +29,51 @@ if [ ! -f /usr/bin/pacman ];
 	echo "Error: Pacman is not found, please install it"
 	exit
    fi
-if [ ! -f /usr/bin/git ];
-   then
-	echo "Error: Git is not found, start installation"
-	sudo pacman -S git
-	if [ ! -f /usr/bin/git ];
-	   then
-		echo "Error: Git is still not installed."
-	   else echo "Git is now installed, pac is ready to use!"
-	   fi
-	exit
-   fi
 if [ ! -d ~/.cache/pac/cache ];
    then
 	mkdir -p ~/.cache/pac/cache
    fi
+if [ ! -f ~/.cache/pac/pac.config ];
+   then
+	echo "checkos=1 # put this on 0 if this fail and you are really on Archlinux." > ~/.cache/pac/pac.config
+	echo "autoupdate=1 # change this to 0 to disable auto update of pac when you do 'pac u'." >> ~/.cache/pac/pac.config
+	echo "tmpdirectory="/tmp" # change this only if you can't write in the /tmp directory." >> ~/.cache/pac/pac.config
+	echo "pacfolder="$HOME/.cache/pac" # don't touch!!!" >> ~/.cache/pac/pac.config
+	sleep 0.1
+	. ~/.cache/pac/pac.config
+   fi
+# check config
+if [ $pacfolder ==  ] 2> /dev/null;
+   then
+	echo "pacfolder="$HOME/.cache/pac" # don't touch!!!" >> ~/.cache/pac/pac.config
+	. ~/.cache/pac/pac.config
+	sleep 0.1
+   fi
+if [ ! -d $pacfolder ];
+   then
+	sed -i "s|$pacfolder|$HOME|g" ~/.cache/pac/pac.config
+	. ~/.cache/pac/pac.config
+	sleep 0.1
+   fi
+if [ ! -d $tmpdirectory ];
+   then
+	sed -i "s|$tmpdirectory|/tmp|g" ~/.cache/pac/pac.config
+	. ~/.cache/pac/pac.config
+	sleep 0.1
+   fi
+if [ $checkos ==  ] 2> /dev/null;
+   then
+	echo "checkos=1 # put this on 0 if this fail and you are really on Archlinux." >> ~/.cache/pac/pac.config
+	. ~/.cache/pac/pac.config
+	sleep 0.1
+   fi
+if [ $autoupdate ==  ] 2> /dev/null;
+   then
+	echo "autoupdate=1 # change this to 0 to disable auto update of pac when you do 'pac u'." >> ~/.cache/pac/pac.config
+	. ~/.cache/pac/pac.config
+	sleep 0.1
+   fi
+###
 if [ -z $1 ];
    then
 	echo "pac $version by theo546 - use 'pac help' to see the help!"
@@ -58,38 +88,55 @@ if [ $1 == "help" ];
 	echo "	'pac c Argument' to use Pacman with custom argument (ex: pac c Sy)"
 	echo "	'pac aur AURPacketName' to install a AUR package."
 	echo "	'pac aur AURPacketName Directory' to install a AUR package and remain downloaded files to the specified directory."
+	echo "	'pac info' to get pac configuration info."
 	echo "	pac tool $version by theo546; https://github.com/theo546/pac"
-	echo "	cache folder: $HOME/.cache/pac/cache - log folder: $HOME/.cache/pac/logs"
+	echo "	cache folder: $pacfolder/cache - log folder: $pacfolder/logs"
+	exit
+   fi
+if [ $1 == "info" ];
+   then
+	echo "pacfolder = $pacfolder, checkos = $checkos, autoupdate = $autoupdate, tmpdirectory = $tmpdirectory, version = $version"
 	exit
    fi
 if [ $1 == "u" ];
    then
 	sudo pacman -Syu
-	content=$(wget https://raw.githubusercontent.com/theo546/pac/master/pac/version -q -O -)
-	if [ $content != $version ];
+	if [ $autoupdate == 1 ];
 	   then
-		rdname=$tmpdirectory/$RANDOM-pac
-		echo "New update of pac found! (current: $version, update: $content)"
-		wget https://raw.githubusercontent.com/theo546/pac/master/pac/pac -q -O $rdname
-		echo "Checking checksum of the new version!"
-		sha512=$(wget https://raw.githubusercontent.com/theo546/pac/master/pac/sha512sum -q -O -)
-		sha512dl=$(sha512sum "$rdname" | cut -d ' ' -f 1)
-		if [ $sha512 != $sha512dl ];
+		echo "Checking update of pac..."
+		content=$(wget https://raw.githubusercontent.com/theo546/pac/master/pac/version -q -O -)
+		if [ $content != $version ];
 		   then
-			echo "Error: Update fail, file is corrupt/modified, aborting..."
-			echo "Checksum of the update: $sha512"
-			echo "Checksum of the downloaded file: $sha512dl"
-			rm $rdname
-			exit
-		   else sudo rm /usr/bin/pac; sudo mv $rdname /usr/bin/pac; sudo chmod +x /usr/bin/pac
-		fi
-		echo "Update successfully checked, and installed!"
+			rdname=$tmpdirectory/$RANDOM-pac
+			echo "New update of pac found! (current: $version, update: $content)"
+			wget https://raw.githubusercontent.com/theo546/pac/master/pac/pac -q -O $rdname
+			if [ ! -f $rdname ];
+			   then
+				echo "Error: update fail, the file can't be downloaded"
+				rm $rdname 2> /dev/null
+				exit
+			   fi
+			echo "Checking checksum of the new version..."
+			sha512=$(wget https://raw.githubusercontent.com/theo546/pac/master/pac/sha512sum -q -O -)
+			sha512dl=$(sha512sum "$rdname" | cut -d ' ' -f 1)
+			if [ $sha512 != $sha512dl ];
+			   then
+				echo "Error: update fail, file is corrupt/modified, aborting..."
+				echo "Checksum of the update: $sha512"
+				echo "Checksum of the downloaded file: $sha512dl"
+				rm $rdname
+				exit
+			   else sudo rm /usr/bin/pac; sudo mv $rdname /usr/bin/pac; sudo chmod +x /usr/bin/pac
+			fi
+			echo "Update successfully checked and installed!"
+			else "No update found!"
+		   fi
 	   fi
 	exit
    fi
 if [ $1 == "r" ];
    then
-	sudo pacman -R $*
+	sudo pacman -R $2 $3 $4 $5 $6 $7 $8 $9
 	exit
    fi
 if [ $1 == "cc" ];
@@ -104,8 +151,91 @@ if [ $1 == "c" ];
    fi
 if [ $1 == "aur" ];
  then
+   if [ ! -f /usr/bin/git ];
+   then
+	echo "Error: Git is not found, start installation"
+	sudo pacman -S git
+	if [ ! -f /usr/bin/git ];
+	   then
+		echo "Error: Git is still not installed."
+		exit
+	   else echo "Git is now installed, pac aur is ready to use!"
+	   fi
+	exit
+   fi
    if [ -z $3 ];
    then
+	if [[ $(cat $pacfolder/db.txt) == *"$2"* ]];
+	   then
+		pkgcheck=$(grep -rnw "$pacfolder/db.txt" -e "$2")
+		[[ $pkgcheck =~ ^([^ ]+)\ ?(.*) ]]
+		aurdl="${BASH_REMATCH[2]}"
+		linedb=$(awk "/$2/{ print NR; exit }" $pacfolder/db.txt)
+		dbdir=$pacfolder/db.txt
+		if [ ! -d $aurdl ]; then 
+				sed -i "$linedb d" $dbdir
+				pac aur $2
+				exit
+			fi
+		if [ ! -f $aurdl/PKGBUILD ]; then
+				sed -i "$linedb d" $dbdir
+				pac aur $2
+				exit
+			fi
+		while true; do
+			echo
+			read -p "Do you wan't to install the previously downloaded $aurdl? If not, a new one will be downloaded. Y(es) or N(o)? " opt
+			case $opt in
+			    y|Y|yes|Yes)
+			      echo "Ok, let's install the downloaded one."
+			      cd $aurdl
+			      if [ $PWD != "$aurdl" ];
+				then
+					echo "Error: can't access the folder! ($aurdl)"
+					exit
+				fi
+			     if [ -f PKGBUILD ];
+			        then
+				     while true; do
+				       echo
+				       read -p "This is a AUR downloaded package, do you wan't to inspect the PKGBUILD before installing it (':q' to quit vi)? Y(es) or N(o)? " opt
+				       case $opt in
+				         y|Y|yes|Yes)
+				           vi PKGBUILD
+				           break
+				           ;;
+				         n|N|no|No)
+				           echo "Ok, let's skip the PKGBUILD inspection!"
+				           break
+				           ;;
+				       esac
+				     done
+				    while true; do
+				      echo
+				      read -p "Do you wan't to install $2? Y(es) or N(o)? " opt
+				      case $opt in
+				          y|Y|yes|Yes)
+					    makepkg -si
+					    echo "Everything is done (at least, for pac)."
+				            break
+				            ;;
+				          n|N|no|No)
+				            echo "Aborting..."
+				            exit
+				            ;;
+				      esac
+				     done
+			        else echo "Error: PKGBUILD doesn't exist!"; exit
+			      fi
+			      break
+			      ;;
+			    n|N|no|No)
+			      echo "Ok, a new download will be make for this package!"
+			      break
+			      ;;
+			esac
+		done
+	   fi
 	randomtmp=$RANDOM$RANDOM$RANDOM
 	randomfolder=$tmpdirectory/$randomtmp-pacAUR; mkdir $randomfolder
 	cd $randomfolder
@@ -119,6 +249,7 @@ if [ $1 == "aur" ];
 	if [ $PWD != "$randomfolder/$2" ];
 	   then
 		echo "Error: can't access the downloaded folder! ($randomfolder)"
+		rm -rf $randomfolder
 		exit
 	   fi
 	if [ -f PKGBUILD ];
@@ -137,19 +268,23 @@ if [ $1 == "aur" ];
 		      ;;
 		  esac
 		done
-	   else echo "Error: PKGBUILD doesn't exist!"; exit
+	   else echo "Error: PKGBUILD doesn't exist!"; rm -rf $randomfolder; exit
 	   fi
 	while true; do
 		echo
-		read -p "Do you wan't the file to be moved to $HOME/.cache/pac/cache/$randomtmp-$2? if not, it will be removed after the installation. Y(es) or N(o)? " opt
+		read -p "Do you wan't the file to be moved to $pacfolder/cache/$randomtmp-$2? If not, it will be removed after the installation. Y(es) or N(o)? " opt
 		case $opt in
 		    y|Y|yes|Yes)
 		      echo "Ok, the downloaded file will be moved to the cache directory."
-		      mkdir ~/.cache/pac/cache/$randomtmp-$2
-		      mv $randomfolder/$2/* ~/.cache/pac/cache/$randomtmp-$2
-		      cd ~/.cache/pac/cache/$randomtmp-$2
+		      mkdir $pacfolder/cache/$randomtmp-$2
+		      mv $randomfolder/$2/* $pacfolder/cache/$randomtmp-$2
+		      cd $pacfolder/cache/$randomtmp-$2
 		      rm -rf $randomfolder
 		      randomfolder=/dev/null
+		      linedb=$(awk "/$2/{ print NR; exit }" $pacfolder/db.txt)
+		      dbdir=$pacfolder/db.txt
+		      sed -i "$linedb d" $dbdir
+		      echo "$2 $pacfolder/cache/$randomtmp-$2" >> $pacfolder/db.txt
 		      break
 		      ;;
 		    n|N|no|No)
@@ -168,7 +303,7 @@ if [ $1 == "aur" ];
 		      ;;
 		    n|N|no|No)
 		      echo "Aborting..."
-		      rm -rf $randomfolder
+		      rm -rf $randomfolder 2> /dev/null
 		      exit
 		      ;;
 		esac
@@ -214,7 +349,7 @@ if [ $1 == "aur" ];
 		      ;;
 		  esac
 		done
-	   else echo "Error: PKGBUILD doesn't exist!"; exit
+	   else echo "Error: PKGBUILD doesn't exist!"; rm -rf $randomfolder; exit
 	   fi
 	while true; do
 		echo
