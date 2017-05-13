@@ -35,7 +35,7 @@ if [ ! -f /usr/bin/git ];
 	sudo pacman -S git
 	if [ ! -f /usr/bin/git ];
 	   then
-		echo "Error: Git is still not installed.
+		echo "Error: Git is still not installed."
 	   else echo "Git is now installed, pac is ready to use!"
 	   fi
 	exit
