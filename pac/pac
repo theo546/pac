@@ -4,11 +4,12 @@
 # please, credit me if you use my tools :D
 # https://github.com/theo546/pac
 
-version="1.0.2" # changelog: https://github.com/theo546/pac/blob/master/README.md
+version="1.0.3" # changelog: https://github.com/theo546/pac/blob/master/README.md
 tmpdirectory="/tmp" # change this only if you can't write in the /tmp directory.
 checkos=1 # put this on 0 if this fail and you are really on Archlinux.
+log=$HOME/.cache/pac/logs/log-$(date +%Y-%m-%d_%H-%M-%S).txt # log directory
 
-if [ $checkos == 1 ];
+if [ $checkos == 1 ]; # i add this here to prevent the creation of the cache folder if not on Archlinux.
    then
 	if [ ! -f /etc/arch-release ];
 	   then
@@ -16,6 +17,13 @@ if [ $checkos == 1 ];
 		exit
 	   fi
    fi
+if [ ! -d ~/.cache/pac/logs ];
+   then
+	mkdir -p ~/.cache/pac/logs
+	sleep 0.1
+   fi
+
+(
 if [ ! -f /usr/bin/pacman ];
    then
 	echo "Error: Pacman is not found, please install it"
@@ -25,17 +33,24 @@ if [ ! -f /usr/bin/git ];
    then
 	echo "Error: Git is not found, start installation"
 	sudo pacman -S git
-	echo "You can restart pac now(if git is installed)"
+	if [ ! -f /usr/bin/git ];
+	   then
+		echo "Error: Git is still not installed.
+	   else echo "Git is now installed, pac is ready to use!"
+	   fi
 	exit
    fi
-
-if [ ! -d ~/.cache/pacAUR ];
+if [ ! -d ~/.cache/pac/cache ];
    then
-	mkdir ~/.cache/pacAUR
+	mkdir -p ~/.cache/pac/cache
    fi
 if [ -z $1 ];
-   then 
-	echo "	No arguments."
+   then
+	echo "pac $version by theo546 - use 'pac help' to see the help!"
+	exit
+   fi
+if [ $1 == "help" ];
+   then
 	echo "	'pac PackageName' to install a packet."
 	echo "	'pac u' to start a system update."
 	echo "	'pac r PackageName' to delete a packet."
@@ -43,8 +58,9 @@ if [ -z $1 ];
 	echo "	'pac c Argument' to use Pacman with custom argument (ex: pac c Sy)"
 	echo "	'pac aur AURPacketName' to install a AUR package."
 	echo "	'pac aur AURPacketName Directory' to install a AUR package and remain downloaded files to the specified directory."
-	echo "	pac tool $version by theo546; https://github.com/theo546"
-	exit 
+	echo "	pac tool $version by theo546; https://github.com/theo546/pac"
+	echo "	cache folder: $HOME/.cache/pac/cache - log folder: $HOME/.cache/pac/logs"
+	exit
    fi
 if [ $1 == "u" ];
    then
@@ -125,13 +141,14 @@ if [ $1 == "aur" ];
 	   fi
 	while true; do
 		echo
-		read -p "Do you wan't the file to be moved to $HOME/.cache/pacAUR/$randomtmp-$2? if not, it will be removed after the installation. Y(es) or N(o)? " opt
+		read -p "Do you wan't the file to be moved to $HOME/.cache/pac/cache/$randomtmp-$2? if not, it will be removed after the installation. Y(es) or N(o)? " opt
 		case $opt in
 		    y|Y|yes|Yes)
 		      echo "Ok, the downloaded file will be moved to the cache directory."
-		      mkdir ~/.cache/pacAUR/$randomtmp-$2
-		      mv $randomfolder/$2/* ~/.cache/pacAUR/$randomtmp-$2
-		      cd ~/.cache/pacAUR/$randomtmp-$2
+		      mkdir ~/.cache/pac/cache/$randomtmp-$2
+		      mv $randomfolder/$2/* ~/.cache/pac/cache/$randomtmp-$2
+		      cd ~/.cache/pac/cache/$randomtmp-$2
+		      rm -rf $randomfolder
 		      randomfolder=/dev/null
 		      break
 		      ;;
@@ -219,3 +236,4 @@ if [ $1 == "aur" ];
    fi
  fi
 sudo pacman -S $*
+) 2>&1 | tee -a $log
