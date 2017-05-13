@@ -1,0 +1,198 @@
+#!/bin/bash
+
+# pac tool by theo546: https://github.com/theo546
+# please, credit me if you use my tools :D
+
+version="1.0"
+tmpdirectory="/tmp" # change this only if you can't write in the /tmp directory
+
+if [ ! -d ~/.cache/pacAUR ];
+   then
+	mkdir ~/.cache/pacAUR
+   fi
+if [ -z $1 ];
+   then 
+	echo "	No arguments."
+	echo "	'pac PackageName' to install a packet."
+	echo "	'pac u' to start a system update."
+	echo "	'pac r PackageName' to delete a packet."
+	echo "	'pac cc' to clear Pacman cache."
+	echo "	'pac c Argument' to use Pacman with custom argument (ex: pac c Sy)"
+	echo "	'pac aur AURPacketName' to install a AUR package."
+	echo "	'pac aur AURPacketName Directory' to install a AUR package and remain downloaded files(to the specified directory)."
+	echo "	pac tool $version by theo546; https://github.com/theo546"
+	exit 
+   fi
+if [ $1 == "u" ];
+   then
+	sudo pacman -Syu
+	content=$(wget https://raw.githubusercontent.com/theo546/pac/master/pac/version -q -O -)
+	if [ $content != $version ];
+	   then
+		rdname=$tmpdirectory/$RANDOM-pac
+		echo "New update of pac found! (current: $version, update: $content)"
+		wget https://raw.githubusercontent.com/theo546/pac/master/pac/pac -q -O $rdname
+		echo "Checking checksum of the new version!"
+		sha512=$(wget https://raw.githubusercontent.com/theo546/pac/master/pac/sha512sum -q -O -)
+		sha512dl=$(sha512sum "$rdname" | cut -d ' ' -f 1)
+		if [ $sha512 != $sha512dl ];
+		   then
+			echo "Error: Update fail, file is corrupt/modified, aborting..."
+			echo "Checksum of the update: $sha512"
+			echo "Checksum of the downloaded file: $sha512dl"
+			rm $rdname
+			exit
+		   else sudo mv $rdname /usr/bin/pac
+		fi
+		echo "Update successfully checked, and installed!"
+	   fi
+	exit
+   fi
+if [ $1 == "r" ];
+   then
+	sudo pacman -R $*
+	exit
+   fi
+if [ $1 == "cc" ];
+   then
+	sudo pacman -Sc
+	exit
+   fi
+if [ $1 == "c" ];
+   then
+	sudo pacman -${2^} $3 $4 $5 $6 $7 $8 $9
+	exit
+   fi
+if [ $1 == "aur" ];
+ then
+   if [ -z $3 ];
+   then
+	randomtmp=$RANDOM$RANDOM$RANDOM
+	randomfolder=$tmpdirectory/$randomtmp-pacAUR; mkdir $randomfolder
+	cd $randomfolder
+	if [ ! -d $randomfolder ];
+	   then
+		echo "Error: can't access the temp folder! ($randomfolder)"
+		exit
+	   fi
+	git clone https://aur.archlinux.org/$2.git
+	cd $2
+	if [ $PWD != "$randomfolder/discord" ];
+	   then
+		echo "Error: can't access the downloaded folder! ($randomfolder)"
+		exit
+	   fi
+	if [ -f PKGBUILD ];
+	   then
+		while true; do
+		  echo
+		  read -p "This is a AUR downloaded package, do you wan't to inspect the PKGBUILD before installing it (':q' to quit vi)? Y(es) or N(o)? " opt
+		  case $opt in
+		    y|Y|yes|Yes)
+		      vi PKGBUILD
+		      break
+		      ;;
+		    n|N|no|No)
+		      echo "Ok, let's skip the PKGBUILD inspection!"
+		      break
+		      ;;
+		  esac
+		done
+	   else echo "Error: PKGBUILD doesn't exist!"; exit
+	   fi
+	while true; do
+		echo
+		read -p "Do you wan't the file to be moved to $HOME/.cache/pacAUR/$randomtmp-$2? if not, it will be removed after the installation. Y(es) or N(o)? " opt
+		case $opt in
+		    y|Y|yes|Yes)
+		      echo "Ok, the downloaded file will be moved to the cache directory."
+		      mkdir ~/.cache/pacAUR/$randomtmp-$2
+		      mv $randomfolder/$2/* ~/.cache/pacAUR/$randomtmp-$2
+		      cd ~/.cache/pacAUR/$randomtmp-$2
+		      randomfolder=/dev/null
+		      break
+		      ;;
+		    n|N|no|No)
+		      echo "Ok, the downloaded file will be removed after the installation."
+		      break
+		      ;;
+		esac
+	done
+	while true; do
+		echo
+		read -p "Do you wan't to install $2? Y(es) or N(o)? " opt
+		case $opt in
+		    y|Y|yes|Yes)
+		      echo "All right, let's go!"
+		      break
+		      ;;
+		    n|N|no|No)
+		      echo "Aborting..."
+		      rm -rf $randomfolder
+		      exit
+		      ;;
+		esac
+	done
+	makepkg -si
+	echo "Everything is done (at least, for pac)."
+	rm -rf $randomfolder 2> /dev/null
+	exit
+   else
+	dirtmp=$(echo $3 | sed 's/\/*$//')
+	cd $dirtmp 2> /dev/null
+	if [ $dirtmp != $PWD ];
+	   then
+		echo "Error: can't access $dirtmp!"
+		exit
+	   fi
+	if [ -d $2 ];
+	   then
+		echo "Error: a folder with the same name as the requested package already exist!"
+		exit
+	   fi
+	git clone https://aur.archlinux.org/$2.git
+	dirtmp2=$(echo $dirtmp/$2)
+	cd $2
+	if [ $PWD != $dirtmp2 ];
+	   then
+		echo "Error: can't access the downloaded folder! ($dirtmp2)"
+		exit
+	   fi
+	if [ -f PKGBUILD ];
+	   then
+		while true; do
+		  echo
+		  read -p "This is a AUR downloaded package, do you wan't to inspect the PKGBUILD before installing it (':q' to quit vi)? Y(es) or N(o)? " opt
+		  case $opt in
+		    y|Y|yes|Yes)
+		      vi PKGBUILD
+		      break
+		      ;;
+		    n|N|no|No)
+		      echo "Ok, let's skip the PKGBUILD inspection!"
+		      break
+		      ;;
+		  esac
+		done
+	   else echo "Error: PKGBUILD doesn't exist!"; exit
+	   fi
+	while true; do
+		echo
+		read -p "Do you wan't to install $2? Y(es) or N(o)? " opt
+		case $opt in
+		    y|Y|yes|Yes)
+		      echo "All right, let's go!"
+		      break
+		      ;;
+		    n|N|no|No)
+		      echo "Aborting..."
+		      exit
+		      ;;
+		esac
+	done
+	makepkg -si
+	echo "Everything is done (at least, for pac)."
+	exit
+   fi
+ fi
+sudo pacman -S $*
