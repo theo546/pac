@@ -10,4 +10,5 @@ Allow execution: chmod +x /usr/bin/pac
 
 # Change log
 1.0.1 fixed update system
+
 1.0 initial release
