@@ -26,6 +26,8 @@ Save it as /usr/bin/pac
 Allow execution: chmod +x /usr/bin/pac
 
 # Change log
+1.0.4_3 fixed a security issue where the checksum pass when it's blank
+
 1.0.4_2 fixed a string when no update is found
 
 1.0.4_1 fixed output about db.txt on the first launch
