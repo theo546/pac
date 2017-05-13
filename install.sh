@@ -2,7 +2,7 @@
 
 # pac tool install by theo546: https://github.com/theo546
 
-echo "Installation of pac..."
+echo "Started installation of pac..."
 rdname=/tmp/$RANDOM-pac
 wget https://raw.githubusercontent.com/theo546/pac/master/pac/pac -q -O $rdname
 if [ ! -f $rdname ];
@@ -23,4 +23,4 @@ if [ $sha512 != $sha512dl ];
 	exit
    else sudo rm /usr/bin/pac 2> /dev/null; sudo mv $rdname /usr/bin/pac; sudo chmod +x /usr/bin/pac
    fi
-echo "pac has been installed successfully, use 'pac' to start working!"
+echo "pac has been successfully installed, use 'pac' to start working!"
