@@ -3,7 +3,7 @@
 # pac tool by theo546: https://github.com/theo546
 # please, credit me if you use my tools :D
 
-version="1.0"
+version="1.0.1"
 tmpdirectory="/tmp" # change this only if you can't write in the /tmp directory
 
 if [ ! -d ~/.cache/pacAUR ];
@@ -42,7 +42,7 @@ if [ $1 == "u" ];
 			echo "Checksum of the downloaded file: $sha512dl"
 			rm $rdname
 			exit
-		   else sudo mv $rdname /usr/bin/pac
+		   else sudo rm /usr/bin/pac; sudo mv $rdname /usr/bin/pac; sudo chmod +x /usr/bin/pac
 		fi
 		echo "Update successfully checked, and installed!"
 	   fi
