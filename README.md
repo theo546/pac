@@ -14,8 +14,7 @@ Open a terminal, type 'chmod +x /path/to/installer'.
 
 Then type './installer.sh', type you're sudo password, then you're good, type 'pac' to see ;D
 
-
-
+___
 
 Manually:
 
