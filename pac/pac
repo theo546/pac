@@ -4,7 +4,7 @@
 # please, credit me if you use my tools :D
 # https://github.com/theo546/pac
 
-version="1.0.3" # changelog: https://github.com/theo546/pac/blob/master/README.md
+version="1.0.3_2" # changelog: https://github.com/theo546/pac/blob/master/README.md
 tmpdirectory="/tmp" # change this only if you can't write in the /tmp directory.
 checkos=1 # put this on 0 if this fail and you are really on Archlinux.
 log=$HOME/.cache/pac/logs/log-$(date +%Y-%m-%d_%H-%M-%S).txt # log directory
