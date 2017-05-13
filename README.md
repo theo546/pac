@@ -9,6 +9,8 @@ Save it as /usr/bin/pac
 Allow execution: chmod +x /usr/bin/pac
 
 # Change log
+1.0.2 added check if the system is on Archlinux, check for pacman and git, and changed some stuff.
+
 1.0.1 fixed update system
 
 1.0 initial release
