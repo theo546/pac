@@ -4,7 +4,8 @@
 # please, credit me if you use my tool, enjoy :D
 # https://github.com/theo546/pac
 
-version="1.0.4_3" # changelog: https://github.com/theo546/pac/blob/master/README.md
+version="1.0.4_4" # changelog: 
+https://github.com/theo546/pac/blob/master/README.md
 log=$HOME/.cache/pac/logs/log-$(date +%Y-%m-%d_%H-%M-%S).txt # log directory
 
 if [ ! -f ~/.cache/pac/pac.config ]; then
@@ -129,7 +130,7 @@ if [ $1 == "u" ];
 				rm $rdname
 				exit
 			   fi
-			if [ $sha512 != "3dzqdqzzd" ];
+			if [ $sha512 != $sha512dl ];
 			   then
 				echo " Error: update fail, file is corrupt/modified, aborting..."
 				echo "Checksum of the update: $sha512"
