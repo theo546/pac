@@ -26,6 +26,8 @@ Save it as /usr/bin/pac
 Allow execution: chmod +x /usr/bin/pac
 
 # Change log
+1.0.4_4 fixed a updater bug, if you're on 1.0.4_3, you need to manually reinstall pac.
+
 1.0.4_3 fixed a security issue where the checksum pass when it's blank
 
 1.0.4_2 fixed a string when no update is found
