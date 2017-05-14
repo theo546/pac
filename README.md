@@ -24,6 +24,7 @@ Allow execution: chmod +x /usr/bin/pac
 ```
 
 ## Change log
+1.0.4_7 fixed the db script for aur
 1.0.4_6 removed the echo of the checksum after an update<br>
 1.0.4_5 fixed a bug, the github link was not a comment anymore.<br>
 1.0.4_4 fixed a updater bug, if you're on 1.0.4_3, you need to manually reinstall pac.<br>
