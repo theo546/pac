@@ -16,7 +16,7 @@ sha512=$(wget https://raw.githubusercontent.com/theo546/pac/master/pac/sha512sum
 sha512dl=$(sha512sum "$rdname" | cut -d ' ' -f 1)
 if [ $sha512 != $sha512dl ];
    then
-	echo "Error: Install fail, file is corrupt/modified, aborting..."
+	echo "Error: Install fail, the file is corrupt/modified, aborting..."
 	echo "Checksum of the file: $sha512"
 	echo "Checksum of the downloaded file: $sha512dl"
 	rm $rdname
