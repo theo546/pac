@@ -13,14 +13,15 @@ Then type './installer.sh', type you're sudo password, then you're good, type 'p
 ```
 ___
 
+
 Manually:
 
+```
 Download the pac file in the pac folder
 (here: https://raw.githubusercontent.com/theo546/pac/master/pac/pac)
-
 Save it as /usr/bin/pac
-
 Allow execution: chmod +x /usr/bin/pac
+```
 
 ## Change log
 1.0.4_6 removed the echo of the checksum after an update
