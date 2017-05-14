@@ -4,7 +4,7 @@
 # please, credit me if you use my tool, enjoy :D
 # https://github.com/theo546/pac
 
-version="1.0.4_6" # changelog: https://github.com/theo546/pac/blob/master/README.md
+version="1.0.4_7" # changelog: https://github.com/theo546/pac/blob/master/README.md
 log=$HOME/.cache/pac/logs/log-$(date +%Y-%m-%d_%H-%M-%S).txt # log directory
 
 if [ ! -f ~/.cache/pac/pac.config ]; then
@@ -292,8 +292,11 @@ if [ $1 == "aur" ];
 		      rm -rf $randomfolder
 		      randomfolder=/dev/null
 		      linedb=$(awk "/$2/{ print NR; exit }" $pacfolder/db.txt)
+		      if [ ! $linedb == "" ];
+		         then
+				sed -i "$linedb d" $dbdir
+		         fi
 		      dbdir=$pacfolder/db.txt
-		      sed -i "$linedb d" $dbdir
 		      echo "$2 $pacfolder/cache/$randomtmp-$2" >> $pacfolder/db.txt
 		      break
 		      ;;
