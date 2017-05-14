@@ -31,7 +31,7 @@ Allow execution: chmod +x /usr/bin/pac
 1.0.4_2 fixed a string when no update is found<br>
 1.0.4_1 fixed output about db.txt on the first launch<br>
 1.0.4 added verification and ask the user if he wan't to install the previously downloaded package(aur)<br>
-  now, pac have config files, in ~/.cache/pac/pac.config, autoupdate can now be set<br>
+    - now, pac have config files, in ~/.cache/pac/pac.config, autoupdate can now be set<br>
 1.0.3_1 fixed a bad string<br>
 1.0.3 added log system, changed folder of cache to ~/.cache/pac, changed a lot of things.<br>
 1.0.2 added check if the system is on Archlinux, check for pacman and git, and changed some stuff.<br>
