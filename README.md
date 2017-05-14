@@ -24,19 +24,19 @@ Allow execution: chmod +x /usr/bin/pac
 ```
 
 ## Change log
-###### 1.0.4_6 removed the echo of the checksum after an update<br>
-###### 1.0.4_5 fixed a bug, the github link was not a comment anymore.<br>
-###### 1.0.4_4 fixed a updater bug, if you're on 1.0.4_3, you need to manually reinstall pac.<br>
-###### 1.0.4_3 fixed a security issue where the checksum pass when it's blank<br>
-###### 1.0.4_2 fixed a string when no update is found<br>
-###### 1.0.4_1 fixed output about db.txt on the first launch<br>
-###### 1.0.4 added verification and ask the user if he wan't to install the previously downloaded package(aur)<br>
+1.0.4_6 removed the echo of the checksum after an update<br>
+1.0.4_5 fixed a bug, the github link was not a comment anymore.<br>
+1.0.4_4 fixed a updater bug, if you're on 1.0.4_3, you need to manually reinstall pac.<br>
+1.0.4_3 fixed a security issue where the checksum pass when it's blank<br>
+1.0.4_2 fixed a string when no update is found<br>
+1.0.4_1 fixed output about db.txt on the first launch<br>
+1.0.4 added verification and ask the user if he wan't to install the previously downloaded package(aur)<br>
   now, pac have config files, in ~/.cache/pac/pac.config, autoupdate can now be set<br>
-###### 1.0.3_1 fixed a bad string<br>
-###### 1.0.3 added log system, changed folder of cache to ~/.cache/pac, changed a lot of things.<br>
-###### 1.0.2 added check if the system is on Archlinux, check for pacman and git, and changed some stuff.<br>
-###### 1.0.1 fixed update system<br>
-###### 1.0 initial release<br>
+1.0.3_1 fixed a bad string<br>
+1.0.3 added log system, changed folder of cache to ~/.cache/pac, changed a lot of things.<br>
+1.0.2 added check if the system is on Archlinux, check for pacman and git, and changed some stuff.<br>
+1.0.1 fixed update system<br>
+1.0 initial release<br>
 
 ## Any problem?
 Please, open an issue, i will try to fix it as soon as possible! :-)
