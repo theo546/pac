@@ -5,13 +5,9 @@ Pac is an useful tool for Archlinux who interact with Pacman, and can download p
 Automatically:
 
 Use the auto script!
-
 Download it here: https://raw.githubusercontent.com/theo546/pac/master/install.sh
-
 Drop it on you're desktop or where you wan't.
-
 Open a terminal, type 'chmod +x /path/to/installer'.
-
 Then type './installer.sh', type you're sudo password, then you're good, type 'pac' to see ;D
 
 ___
