@@ -4,8 +4,7 @@
 # please, credit me if you use my tool, enjoy :D
 # https://github.com/theo546/pac
 
-version="1.0.4_4" # changelog: 
-https://github.com/theo546/pac/blob/master/README.md
+version="1.0.4_5" # changelog: https://github.com/theo546/pac/blob/master/README.md
 log=$HOME/.cache/pac/logs/log-$(date +%Y-%m-%d_%H-%M-%S).txt # log directory
 
 if [ ! -f ~/.cache/pac/pac.config ]; then
