@@ -1,15 +1,16 @@
 # pac
 Pac is an useful tool for Archlinux who interact with Pacman, and can download package from AUR!
 
-# Installation
+## Installation
 Automatically:
 
+```
 Use the auto script!
 Download it here: https://raw.githubusercontent.com/theo546/pac/master/install.sh
 Drop it on you're desktop or where you wan't.
 Open a terminal, type 'chmod +x /path/to/installer'.
 Then type './installer.sh', type you're sudo password, then you're good, type 'pac' to see ;D
-
+```
 ___
 
 Manually:
@@ -21,7 +22,7 @@ Save it as /usr/bin/pac
 
 Allow execution: chmod +x /usr/bin/pac
 
-# Change log
+## Change log
 1.0.4_6 removed the echo of the checksum after an update
 
 1.0.4_5 fixed a bug, the github link was not a comment anymore.
@@ -47,5 +48,5 @@ Allow execution: chmod +x /usr/bin/pac
 
 1.0 initial release
 
-# Any problem?
+## Any problem?
 Please, open an issue, i will try to fix it as soon as possible! :-)
