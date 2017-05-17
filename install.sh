@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # pac tool install by theo546: https://github.com/theo546
+# https://github.com/theo546/pac - GPLv3
 
 echo "Started installation of pac..."
 rdname=/tmp/$RANDOM-pac
@@ -16,13 +17,13 @@ sha512=$(wget https://raw.githubusercontent.com/theo546/pac/master/pac/sha512sum
 sha512dl=$(sha512sum "$rdname" | cut -d ' ' -f 1)
 if [ $sha512 == ] 2> /dev/null;
    then
-	echo " Error: can't get the checksum, aborting..."
+	echo "Error: can't get the checksum, aborting..."
 	rm $rdname
 	exit
    fi
 if [ $sha512 != $sha512dl ];
    then
-	echo "Error: Install fail, file is corrupt/modified, aborting..."
+	echo "Error: Install failed, file is corrupt/modified, aborting..."
 	echo "Checksum of the file: $sha512"
 	echo "Checksum of the downloaded file: $sha512dl"
 	rm $rdname
