@@ -2,9 +2,9 @@
 
 # pac tool by theo546: https://github.com/theo546
 # please, credit me if you use my tool, enjoy :D
-# https://github.com/theo546/pac
+# https://github.com/theo546/pac - GPLv3
 
-version="1.0.4_8" # changelog: https://github.com/theo546/pac/blob/master/README.md
+version="1.0.5" # changelog: https://github.com/theo546/pac/blob/master/README.md
 log=$HOME/.cache/pac/logs/log-$(date +%Y-%m-%d_%H-%M-%S).txt # log directory
 
 if [ ! -f ~/.cache/pac/pac.config ]; then
@@ -42,9 +42,10 @@ if [ ! -f ~/.cache/pac/pac.config ];
 	sleep 0.1
 	. ~/.cache/pac/pac.config
    fi
-if [ ! -f ~/.cache/pac/db.txt ];
+if [ ! -f ~/.cache/pac/db.txt ] || [ ! -f ~/.cache/pac/pkg.txt ];
    then
 	touch ~/.cache/pac/db.txt
+	touch ~/.cache/pac/pkg.txt
    fi
 # check config
 if [ $pacfolder ==  ] 2> /dev/null;
@@ -79,6 +80,95 @@ if [ $autoupdate ==  ] 2> /dev/null;
    fi
 # delete temp directory of pac if exist
 rm -rf $tmpdirectory/*-pacAUR 2> /dev/null
+# aur function
+function InstallPackage() {
+if [ ! -f PKGBUILD ];
+   then
+	echo "Error: PKGBUILD doesn't exist!"
+	if [ $2 == "rm" ];
+	   then
+		if [ $1 == "install" ];
+		   then
+			rm -rf $3 2> /dev/null
+			return
+		   fi
+		rm -rf $4 2> /dev/null
+	   fi
+	exit
+   fi
+if [ $1 == "inspect" ];
+   then
+	while true; do
+	  echo
+	  read -p "This is an AUR downloaded package, do you wan't to inspect the PKGBUILD before installing it (':q' to quit vi)? Y(es) or N(o)? " opt
+	  case $opt in
+	    y|Y|yes|Yes)
+	      vi PKGBUILD
+	      break
+	      ;;
+	    n|N|no|No)
+	      echo "Ok, let's skip the PKGBUILD inspection!"
+	      break
+	      ;;
+	  esac
+	done
+	if [ $5 == "r" ] 2> /dev/null;
+	then
+		return
+	fi
+	InstallPackage confirm $2 $3 $4
+   fi
+if [ $1 == "confirm" ];
+   then
+	while true; do
+		echo
+		read -p "Do you wan't to install $3? Y(es) or N(o)? " opt
+		case $opt in
+		    y|Y|yes|Yes)
+		      echo "All right, let's go!"
+		      InstallPackage install $2 $4 $3
+		      break
+		      ;;
+		    n|N|no|No)
+		      echo "Aborting..."
+		      if [ $2 == "rm" ] 2> /dev/null;
+		         then
+				rm -rf $4 2> /dev/null
+			 fi
+		      exit
+		      ;;
+		esac
+	done
+   fi
+if [ $1 == "install" ];
+   then
+	makepkg -si
+	echo "Everything is done (at least, for pac)."
+	getverpkgtxt=$(grep -rF "PKGBUILD" -e "pkgver=")
+	getverpkgtxt2=$(sed -e 's#.*=\(\)#\1#' <<< "$getverpkgtxt")
+	if [ $4 == ] 2> /dev/null;
+	   then
+		linedb2=$(awk "/$2/{ print NR; exit }" $pacfolder/pkg.txt)
+		if [ ! $linedb == "" ];
+		   then
+			sed -i "$linedb2 d" $pacfolder/pkg.txt
+		   fi
+		echo "$2 $getverpkgtxt2" >> $pacfolder/pkg.txt
+	   else
+		linedb2=$(awk "/$4/{ print NR; exit }" $pacfolder/pkg.txt)
+		if [ ! $linedb == "" ];
+		   then
+			sed -i "$linedb2 d" $pacfolder/pkg.txt
+		   fi
+		echo "$4 $getverpkgtxt2" >> $pacfolder/pkg.txt
+	   fi
+	if [ $2 == "rm" ];
+	   then
+		rm -rf $3 2> /dev/null
+	   fi
+   fi
+exit
+}
 ###
 if [ -z $1 ];
    then
@@ -87,21 +177,26 @@ if [ -z $1 ];
    fi
 if [ $1 == "help" ];
    then
-	echo "	'pac PackageName' to install a packet."
+	echo "	 _       "
+	echo "	|_) _  _ "
+	echo "	|  (_|(_ "
+	echo
+	echo "	'pac PackageName' to install a package."
 	echo "	'pac u' to start a system update."
-	echo "	'pac r PackageName' to delete a packet."
+	echo "	'pac ud' to update the Pacman database."
+	echo "	'pac r PackageName' to delete a package."
 	echo "	'pac cc' to clear Pacman cache."
-	echo "	'pac c Argument' to use Pacman with custom argument (ex: pac c Sy)"
-	echo "	'pac aur AURPacketName' to install a AUR package."
-	echo "	'pac aur AURPacketName Directory' to install a AUR package and remain downloaded files to the specified directory."
+	echo "	'pac c Argument' to use Pacman with custom argument. (ex: pac c Sy)"
+	echo "	'pac aur AURPacketName [Directory]' to install an AUR package."
 	echo "	'pac info' to get pac configuration info."
 	echo "	pac tool $version by theo546; https://github.com/theo546/pac"
-	echo "	cache folder: $pacfolder/cache - log folder: $pacfolder/logs"
+	echo
 	exit
    fi
 if [ $1 == "info" ];
    then
 	echo "pacfolder = $pacfolder, checkos = $checkos, autoupdate = $autoupdate, tmpdirectory = $tmpdirectory, version = $version"
+	echo "cache folder: $pacfolder/cache - log folder: $pacfolder/logs"
 	exit
    fi
 if [ $1 == "u" ];
@@ -133,7 +228,7 @@ if [ $1 == "u" ];
 			   fi
 			if [ $sha512 != $sha512dl ];
 			   then
-				echo " Error: update fail, file is corrupt/modified, aborting..."
+				echo " Error: update failed, file is corrupt/modified, aborting..."
 				echo "Checksum of the update: $sha512"
 				echo "Checksum of the downloaded file: $sha512dl"
 				rm $rdname
@@ -144,6 +239,11 @@ if [ $1 == "u" ];
 			else echo " No update found!"
 		   fi
 	   fi
+	exit
+   fi
+if [ $1 == "ud" ];
+   then
+	sudo pacman -Sy
 	exit
    fi
 if [ $1 == "r" ];
@@ -163,9 +263,14 @@ if [ $1 == "c" ];
    fi
 if [ $1 == "aur" ];
  then
+   if [ $2 == "rm" ];
+      then
+	echo "Error: forbidden package name!"
+        exit
+      fi
    if [ ! -f /usr/bin/git ];
    then
-	echo "Error: Git is not found, start installation"
+	echo "Error: Git is not found, starting installation..."
 	sudo pacman -S git
 	if [ ! -f /usr/bin/git ];
 	   then
@@ -173,27 +278,20 @@ if [ $1 == "aur" ];
 		exit
 	   else echo "Git is now installed, pac aur is ready to use!"
 	   fi
-	exit
    fi
    if [ -z $3 ];
    then
 	if [[ $(cat $pacfolder/db.txt) == *"$2"* ]];
 	   then
 		pkgcheck=$(grep -rnw "$pacfolder/db.txt" -e "$2")
-		[[ $pkgcheck =~ ^([^ ]+)\ ?(.*) ]]
-		aurdl="${BASH_REMATCH[2]}"
+		aurdl=$(echo $pkgcheck | cut -d " " -f 2)
 		linedb=$(awk "/$2/{ print NR; exit }" $pacfolder/db.txt)
 		dbdir=$pacfolder/db.txt
-		if [ ! -d $aurdl ]; then 
-				sed -i "$linedb d" $dbdir
-				pac aur $2
-				exit
-			fi
-		if [ ! -f $aurdl/PKGBUILD ]; then
-				sed -i "$linedb d" $dbdir
-				pac aur $2
-				exit
-			fi
+		if [ ! -d $aurdl ] || [ ! -f $aurdl/PKGBUILD ]; then 
+			sed -i "$linedb d" $dbdir
+			pac aur $2
+			exit
+		   fi
 		while true; do
 			echo
 			read -p "Do you wan't to install the previously downloaded $aurdl? If not, a new one will be downloaded. Y(es) or N(o)? " opt
@@ -206,39 +304,7 @@ if [ $1 == "aur" ];
 					echo "Error: can't access the folder! ($aurdl)"
 					exit
 				fi
-			     if [ -f PKGBUILD ];
-			        then
-				     while true; do
-				       echo
-				       read -p "This is a AUR downloaded package, do you wan't to inspect the PKGBUILD before installing it (':q' to quit vi)? Y(es) or N(o)? " opt
-				       case $opt in
-				         y|Y|yes|Yes)
-				           vi PKGBUILD
-				           break
-				           ;;
-				         n|N|no|No)
-				           echo "Ok, let's skip the PKGBUILD inspection!"
-				           break
-				           ;;
-				       esac
-				     done
-				    while true; do
-				      echo
-				      read -p "Do you wan't to install $2? Y(es) or N(o)? " opt
-				      case $opt in
-				          y|Y|yes|Yes)
-					    makepkg -si
-					    echo "Everything is done (at least, for pac)."
-				            break
-				            ;;
-				          n|N|no|No)
-				            echo "Aborting..."
-				            exit
-				            ;;
-				      esac
-				     done
-			        else echo "Error: PKGBUILD doesn't exist!"; exit
-			      fi
+			      InstallPackage inspect $2
 			      break
 			      ;;
 			    n|N|no|No)
@@ -264,27 +330,10 @@ if [ $1 == "aur" ];
 		rm -rf $randomfolder
 		exit
 	   fi
-	if [ -f PKGBUILD ];
-	   then
-		while true; do
-		  echo
-		  read -p "This is a AUR downloaded package, do you wan't to inspect the PKGBUILD before installing it (':q' to quit vi)? Y(es) or N(o)? " opt
-		  case $opt in
-		    y|Y|yes|Yes)
-		      vi PKGBUILD
-		      break
-		      ;;
-		    n|N|no|No)
-		      echo "Ok, let's skip the PKGBUILD inspection!"
-		      break
-		      ;;
-		  esac
-		done
-	   else echo "Error: PKGBUILD doesn't exist!"; rm -rf $randomfolder; exit
-	   fi
+	InstallPackage inspect rm $2 $randomfolder r
 	while true; do
 		echo
-		read -p "Do you wan't the file to be moved to $pacfolder/cache/$randomtmp-$2? If not, it will be removed after the installation. Y(es) or N(o)? " opt
+		read -p "Do you wan't the files to be moved to $pacfolder/cache/$randomtmp-$2? If not, it will be removed after the installation. Y(es) or N(o)? " opt
 		case $opt in
 		    y|Y|yes|Yes)
 		      echo "Ok, the downloaded file will be moved to the cache directory."
@@ -294,12 +343,14 @@ if [ $1 == "aur" ];
 		      rm -rf $randomfolder
 		      randomfolder=/dev/null
 		      linedb=$(awk "/$2/{ print NR; exit }" $pacfolder/db.txt)
+		      getver=$(grep -rF "$pacfolder/cache/$randomtmp-$2/PKGBUILD" -e "pkgver=")
+		      getver2=$(sed -e 's#.*=\(\)#\1#' <<< "$getver")
 		      if [ ! $linedb == "" ];
 		         then
 				sed -i "$linedb d" $dbdir
 		         fi
 		      dbdir=$pacfolder/db.txt
-		      echo "$2 $pacfolder/cache/$randomtmp-$2" >> $pacfolder/db.txt
+		      echo "$2 $pacfolder/cache/$randomtmp-$2 $getver2" >> $pacfolder/db.txt
 		      break
 		      ;;
 		    n|N|no|No)
@@ -308,24 +359,7 @@ if [ $1 == "aur" ];
 		      ;;
 		esac
 	done
-	while true; do
-		echo
-		read -p "Do you wan't to install $2? Y(es) or N(o)? " opt
-		case $opt in
-		    y|Y|yes|Yes)
-		      echo "All right, let's go!"
-		      break
-		      ;;
-		    n|N|no|No)
-		      echo "Aborting..."
-		      rm -rf $randomfolder 2> /dev/null
-		      exit
-		      ;;
-		esac
-	done
-	makepkg -si
-	echo "Everything is done (at least, for pac)."
-	rm -rf $randomfolder 2> /dev/null
+	InstallPackage confirm rm $2 $randomfolder
 	exit
    else
 	dirtmp=$(echo $3 | sed 's/\/*$//')
@@ -348,40 +382,7 @@ if [ $1 == "aur" ];
 		echo "Error: can't access the downloaded folder! ($dirtmp2)"
 		exit
 	   fi
-	if [ -f PKGBUILD ];
-	   then
-		while true; do
-		  echo
-		  read -p "This is a AUR downloaded package, do you wan't to inspect the PKGBUILD before installing it (':q' to quit vi)? Y(es) or N(o)? " opt
-		  case $opt in
-		    y|Y|yes|Yes)
-		      vi PKGBUILD
-		      break
-		      ;;
-		    n|N|no|No)
-		      echo "Ok, let's skip the PKGBUILD inspection!"
-		      break
-		      ;;
-		  esac
-		done
-	   else echo "Error: PKGBUILD doesn't exist!"; rm -rf $randomfolder; exit
-	   fi
-	while true; do
-		echo
-		read -p "Do you wan't to install $2? Y(es) or N(o)? " opt
-		case $opt in
-		    y|Y|yes|Yes)
-		      echo "All right, let's go!"
-		      break
-		      ;;
-		    n|N|no|No)
-		      echo "Aborting..."
-		      exit
-		      ;;
-		esac
-	done
-	makepkg -si
-	echo "Everything is done (at least, for pac)."
+	InstallPackage inspect $2
 	exit
    fi
  fi
