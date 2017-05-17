@@ -24,7 +24,7 @@ Allow execution: chmod +x /usr/bin/pac
 ```
 
 ## Change log
-1.0.5 big update! changed form of 'pac help', optimized a little bit the code(with function)
+1.0.5 big update! changed form of 'pac help', optimized a little bit the code(with function)<br>
     - added version of aur package for future update system for aur!<br>
 1.0.4_8 auto delete folder that end with pacAUR in the temp folder<br>
 1.0.4_7 fixed the db script for aur<br>
