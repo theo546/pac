@@ -4,8 +4,8 @@ Pac is an useful tool for Archlinux who interact with Pacman, and can download p
 ## Installation
 Automatically:
 
-```
 Use the auto script!
+```
 Download it here: https://raw.githubusercontent.com/theo546/pac/master/install.sh
 Drop it on you're desktop or where you wan't.
 Open a terminal, type 'chmod +x /path/to/installer'.
@@ -17,7 +17,7 @@ ___
 Manually:
 
 ```
-Download the pac file in the pac folder
+Download the pac script in the pac folder
 (here: https://raw.githubusercontent.com/theo546/pac/master/pac/pac)
 Save it as /usr/bin/pac
 Allow execution: chmod +x /usr/bin/pac
