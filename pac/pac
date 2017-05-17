@@ -4,7 +4,7 @@
 # please, credit me if you use my tool, enjoy :D
 # https://github.com/theo546/pac - GPLv3
 
-version="1.0.5" # changelog: https://github.com/theo546/pac/blob/master/README.md
+version="1.0.5_1" # changelog: https://github.com/theo546/pac/blob/master/README.md
 log=$HOME/.cache/pac/logs/log-$(date +%Y-%m-%d_%H-%M-%S).txt # log directory
 
 if [ ! -f ~/.cache/pac/pac.config ]; then
@@ -149,19 +149,16 @@ if [ $1 == "install" ];
 	if [ $4 == ] 2> /dev/null;
 	   then
 		linedb2=$(awk "/$2/{ print NR; exit }" $pacfolder/pkg.txt)
-		if [ ! $linedb == "" ];
-		   then
-			sed -i "$linedb2 d" $pacfolder/pkg.txt
-		   fi
-		echo "$2 $getverpkgtxt2" >> $pacfolder/pkg.txt
+		namepkg=$2
 	   else
 		linedb2=$(awk "/$4/{ print NR; exit }" $pacfolder/pkg.txt)
-		if [ ! $linedb == "" ];
-		   then
-			sed -i "$linedb2 d" $pacfolder/pkg.txt
-		   fi
-		echo "$4 $getverpkgtxt2" >> $pacfolder/pkg.txt
+		namepkg=$4
 	   fi
+	if [ ! $linedb2 == "" ];
+	   then
+		sed -i "$linedb2 d" $pacfolder/pkg.txt
+	   fi
+	echo "$namepkg $getverpkgtxt2" >> $pacfolder/pkg.txt
 	if [ $2 == "rm" ];
 	   then
 		rm -rf $3 2> /dev/null
@@ -186,7 +183,7 @@ if [ $1 == "help" ];
 	echo "	'pac ud' to update the Pacman database."
 	echo "	'pac r PackageName' to delete a package."
 	echo "	'pac cc' to clear Pacman cache."
-	echo "	'pac c Argument' to use Pacman with custom argument. (ex: pac c Sy)"
+	echo "	'pac c Argument' to use Pacman with custom argument. (ex: pac c sy)"
 	echo "	'pac aur AURPacketName [Directory]' to install an AUR package."
 	echo "	'pac info' to get pac configuration info."
 	echo "	pac tool $version by theo546; https://github.com/theo546/pac"
@@ -201,7 +198,7 @@ if [ $1 == "info" ];
    fi
 if [ $1 == "u" ];
    then
-	sudo pacman -Syu
+	sudo pacman -Syu $2
 	if [ $autoupdate == 1 ];
 	   then
 		echo -n "Checking update for pac..."
