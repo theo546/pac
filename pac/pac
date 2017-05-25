@@ -4,7 +4,7 @@
 # please, credit me if you use my tool, enjoy :D
 # https://github.com/theo546/pac - GPLv3
 
-version="1.0.6_1" # changelog: https://github.com/theo546/pac/blob/master/README.md
+version="1.0.7" # changelog: https://github.com/theo546/pac/blob/master/README.md
 log=$HOME/.cache/pac/logs/log-$(date +%Y-%m-%d_%H-%M-%S).txt # log directory
 
 if [ ! -f ~/.cache/pac/pac.config ]; then
@@ -58,6 +58,9 @@ if [ ! -f ~/.cache/pac/pac.config ];
 	echo "aurautoupdate=1 # change this to 0 to disable auto update of the aur package when you do 'pac u'." >> ~/.cache/pac/pac.config
 	echo "autoupdate=1 # change this to 0 to disable auto update of pac when you do 'pac u'." >> ~/.cache/pac/pac.config
 	echo "tmpdirectory="/tmp" # change this only if you can't write in the /tmp directory." >> ~/.cache/pac/pac.config
+	echo "moveaur=2 # change this to 2 to select evertime where you wan't to download the update, 1 to move them without askin to cache folder and 0 to remove them after install without asking." >> ~/.cache/pac/pac.config
+	echo "noconfirm=2 # change this to 2 to select evertime the noconfirm argument, 1 to add the noconfirm argument without asking and 0 to remove it without asking." >> ~/.cache/pac/pac.config
+	echo "editor=3 # editor when inspecting aur package: Vim = 0, Leafpad = 1, SciTE = 2, vi = 3" >> ~/.cache/pac/pac.config
 	echo "pacfolder="$HOME/.cache/pac" # don't touch!!!" >> ~/.cache/pac/pac.config
 	sleep 0.1
 	. ~/.cache/pac/pac.config
@@ -104,6 +107,30 @@ if [ $autoupdate ==  ] 2> /dev/null;
 	. ~/.cache/pac/pac.config
 	sleep 0.1
    fi
+if [ $moveaur ==  ] 2> /dev/null;
+   then
+	echo "moveaur=2 # change this to 2 to select evertime where you wan't to download the update, 1 to move them without askin to cache folder and 0 to remove them after install without asking." >> ~/.cache/pac/pac.config
+	. ~/.cache/pac/pac.config
+	sleep 0.1
+   fi
+if [ $noconfirm ==  ] 2> /dev/null;
+   then
+	echo "noconfirm=2 # change this to 2 to select evertime the noconfirm argument, 1 to add the noconfirm argument without asking and 0 to remove it without asking." >> ~/.cache/pac/pac.config
+	. ~/.cache/pac/pac.config
+	sleep 0.1
+   fi
+if [ $editor ==  ] 2> /dev/null;
+   then
+	echo "editor=3 # editor when inspecting aur package: Vim = 0, Leafpad = 1, SciTE = 2, vi = 3" >> ~/.cache/pac/pac.config
+	. ~/.cache/pac/pac.config
+	sleep 0.1
+   fi
+# check editor
+if [ ! -f /usr/bin/vim ]; then sed -i "s|editor=0|editor=3|g" ~/.cache/pac/pac.config; . ~/.cache/pac/pac.config; fi
+if [ ! -f /usr/bin/leafpad ]; then sed -i "s|editor=1|editor=3|g" ~/.cache/pac/pac.config; . ~/.cache/pac/pac.config; fi
+if [ ! -f /usr/bin/scite ]; then sed -i "s|editor=2|editor=3|g" ~/.cache/pac/pac.config; . ~/.cache/pac/pac.config; fi
+if [ $editor == 0 ]; then editor1=vim; fi; if [ $editor == 1 ]; then editor1=leafpad; fi
+if [ $editor == 2 ]; then editor1=scite; fi; if [ $editor == 3 ]; then editor1=vi; fi
 # delete temp directory of pac if exist
 rm -rf $tmpdirectory/*-pacAUR 2> /dev/null
 # aur function
@@ -134,10 +161,7 @@ if [ $1 == 1 ];
 	  read -p "This is an AUR downloaded package, do you wan't to inspect the PKGBUILD before installing it (':q' to quit vi/vim)? Y(es) or N(o)? " opt
 	  case $opt in
 	    y|Y|yes|Yes)
-	      if [ -f /usr/bin/vim ]; then /usr/bin/vim PKGBUILD 2> /dev/null; break; fi
-	      if [ -f /usr/bin/leafpad ]; then /usr/bin/leafpad PKGBUILD 2> /dev/null; break; fi
-	      if [ -f /usr/bin/scite ]; then /usr/bin/scite PKGBUILD 2> /dev/null; break; fi
-	      vi PKGBUILD
+	      /usr/bin/$editor1 PKGBUILD 2> /dev/null
 	      break
 	      ;;
 	    n|N|no|No)
@@ -196,10 +220,13 @@ if [ $1 == 3 ];
 		rm -rf $IPpkgdir 2> /dev/null
 	   fi
 	pacmancheck="$(pacman -Q $IPpkgname 2> /dev/null)"
-	if [ $pacmancheck != "$IPpkgname $verrel" ]
+	if [ "$pacmancheck" != "$IPpkgname $verrel" ];
 	   then
-		echo "Warning: the installed package has a different version than AUR downloaded package ($pacmancheck)"
-		$verrel=$pacmancheck
+		echo "Warning: the installed package has a different version than AUR downloaded package."
+		echo "(installed: $pacmancheck, expected: $IPpkgname $verrel)"
+		$verrel="$pacmancheck"
+		warn=1
+	   else warn=0
 	   fi
 	linedb2=$(awk "/$IPpkgname/{ print NR; exit }" $pacfolder/pkg.txt)
 	if [ ! $linedb2 == "" ];
@@ -208,7 +235,7 @@ if [ $1 == 3 ];
 	   fi
 	echo "$IPpkgname $verrel" >> $pacfolder/pkg.txt
 	CheckDb
-	echo "Everything is done, $IPpkgname has been successfully installed."
+	if [ $warn == 0 ]; then echo "$IPpkgname has been successfully installed."; fi
    fi
 }
 WriteDB() {
@@ -291,40 +318,52 @@ if [ -z $1 ];
    fi
 if [ $1 == "help" ];
    then
-	echo "	 _       "
-	echo "	|_) _  _ "
-	echo "	|  (_|(_ "
+	echo "    _       "
+	echo "   |_) _  _ "
+	echo "   |  (_|(_ "
 	echo
-	echo "	'pac PackageName' to install a package."
-	echo "	'pac u' to start a system update."
-	echo "	'pac ud' to update the Pacman database."
-	echo "	'pac i [Directory of Package]' to install a 'tar.xz' package."
-	echo "	'pac r PackageName' to delete a package."
-	echo "	'pac cc' to clear Pacman cache."
-	echo "	'pac aur AURPackageName (Directory)' to install an AUR package."
-	echo "	'pac is AURPackageName' to inspect a PKGBUILD of an AUR package."
-	echo "	'pac s' to search a package in Pacman and AUR."
-	echo "	'pac -Argument' to use Pacman with custom argument. (ex: pac -Sy)"
-	echo "	'pac chk' to check 'db.txt' and 'pkg.txt'"
-	echo "	'pac info' to get pac configuration info."
-	echo "	pac tool $version by theo546; https://github.com/theo546/pac - GPLv3"
+	echo "   'pac PackageName' to install a package."
+	echo "   'pac u (1)' to start a system update. (use 1 to skip Pacman update)"
+	echo "   'pac ud' to update the Pacman database."
+	echo "   'pac i [Directory of Package]' to install a 'tar.xz' package."
+	echo "   'pac r PackageName' to delete a package."
+	echo "   'pac cc' to clear Pacman cache."
+	echo "   'pac aur AURPackageName (Directory)' to install an AUR package."
+	echo "   'pac is AURPackageName' to inspect a PKGBUILD of an AUR package."
+	echo "   'pac s' to search a package in Pacman and AUR."
+	echo "   'pac -Argument' to use Pacman with custom argument. (ex: pac -Sy)"
+	echo "   'pac chk' to check 'db.txt' and 'pkg.txt'"
+	echo "   'pac set' to set the configuration of pac."
+	echo "   'pac cfg' to get pac configuration info."
+	echo "   pac tool $version by theo546; https://github.com/theo546/pac - GPLv3"
 	echo
 	exit
    fi
-if [ $1 == "info" ];
+if [ $1 == "cfg" ];
    then
-	echo "pacfolder = $pacfolder, checkos = $checkos, aurautoupdate = $aurautoupdate, autoupdate = $autoupdate, tmpdirectory = $tmpdirectory, version = $version"
-	echo "cache folder: $pacfolder/cache - log folder: $pacfolder/logs"
+	editorname="vi"
+	if [ "$editor" == 0 ]; then editorname="Vim"; fi
+	if [ "$editor" == 1 ]; then editorname="Leafpad"; fi
+	if [ "$editor" == 2 ]; then editorname="SciTE"; fi
+	echo
+	echo "  pac configuration, change with 'pac set'"
+	echo
+	echo "  checkos = $checkos -- aurautoupdate = $aurautoupdate -- autoupdate = $autoupdate"
+	echo "  moveaur = $moveaur -- noconfirm = $noconfirm -- editor = $editor ($editorname) -- version = $version"
+	echo
+	echo "  pacfolder = $pacfolder - tmpdirectory = $tmpdirectory"
+	echo
 	exit
    fi
 if [ $1 == "u" ];
    then
-	sudo pacman -Syu $2
+	if [ "$2" != "1" ] && [ "$3" != "1" ] 2> /dev/null; then sudo pacman -Syu $2; fi
 	if [ $autoupdate == 1 ];
 	   then
 	   wget -q --tries=10 --timeout=20 --spider https://raw.githubusercontent.com/; if [[ $? -eq 0 ]]; then skippacupdate=0; else skippacupdate=1; echo "raw.githubusercontent.com is unreachable, skipping pac update..."; fi
 	   if [ $skippacupdate == 0 ];
 	      then
+		echo
 		echo -n "Checking update for pac..."
 		content=$(wget https://raw.githubusercontent.com/theo546/pac/master/pac/version -q -O -)
 		if [ $content != $version ];
@@ -356,7 +395,7 @@ if [ $1 == "u" ];
 				exit
 			   else sudo rm /usr/bin/pac; sudo mv $rdname /usr/bin/pac; sudo chmod +x /usr/bin/pac
 			fi
-			echo " [OK]"; echo "Update successfully checked and installed!"; pac u $2; exit
+			echo " [OK]"; echo "Update successfully checked and installed!"; pac u $2 1; exit
 			else echo " No update found!"
 		fi
 	      fi
@@ -366,37 +405,44 @@ if [ $1 == "u" ];
 	   wget -q --tries=10 --timeout=20 --spider https://aur.archlinux.org/; if [[ $? -eq 0 ]]; then skipaur=0; else skipaur=1; echo "aur.archlinux.org is unreachable, skipping AUR update..."; fi
 	   if [ $skipaur == 0 ];
 	      then
-		while true; do
-			echo
-			read -p "Do you wan't to download the AUR package in $pacfolder/cache? Y(es) or N(o)? " opt
-			case $opt in
-			    y|Y|yes|Yes)
-			      echo "All right, they are moved to the cache folder."
-			      moveaur=1
-			      break
-			      ;;
-			    n|N|no|No)
-			      echo "All right, they will be removed after installation"
-			      moveaur=0
-			      break
-			      ;;
-			esac
-		done
-		while true; do
-			echo
-			read -p "Do you wan't to use the '--noconfirm' argument to install quickly the update(you still need to inspect the PKGBUILD)? Y(es) or N(o)? " opt
-			case $opt in
-			    y|Y|yes|Yes)
-			      echo "All right, '--noconfirm' argument added, checking for update now."
-			      noconfirm="--noconfirm"
-			      break
-			      ;;
-			    n|N|no|No)
-			      echo "Ok, no '--noconfirm' argument, checking for update now."
-			      break
-			      ;;
-			esac
-		done
+		if [ $moveaur == 2 ];
+		   then
+			while true; do
+				echo
+				read -p "Do you wan't to download the AUR package in $pacfolder/cache? Y(es) or N(o)? " opt
+				case $opt in
+				    y|Y|yes|Yes)
+				      echo "All right, they are moved to the cache folder."
+				      moveaur=1
+				      break
+				      ;;
+				    n|N|no|No)
+				      echo "All right, they will be removed after installation"
+				      moveaur=0
+				      break
+				      ;;
+				esac
+			done
+		   fi
+		if [ $noconfirm == 2 ];
+		   then
+			while true; do
+				echo
+				read -p "Do you wan't to use the '--noconfirm' argument to install quickly the update(you still need to inspect the PKGBUILD)? Y(es) or N(o)? " opt
+				case $opt in
+				    y|Y|yes|Yes)
+				      echo "All right, '--noconfirm' argument added, checking for update now."
+				      noconfirm="--noconfirm"
+				      break
+				      ;;
+				    n|N|no|No)
+				      echo "Ok, no '--noconfirm' argument, checking for update now."
+				      break
+				      ;;
+				esac
+			done
+		   else if [ $noconfirm == 1 ]; then noconfirm="--noconfirm"; else if [ $noconfirm == 0 ]; then noconfirm=""; fi; fi
+		   fi
 		echo
 		CheckDb
 		sleep 0.1
@@ -447,7 +493,7 @@ if [ $1 == "u" ];
 			      fi
 		      fi
 		done
-		if [ $updatefound == 1 ]; then CheckDb; echo; echo "AUR package update done!"; else echo "No update for AUR package found!"; echo; fi
+		if [ $updatefound == 1 ]; then CheckDb; echo "AUR package update done!"; else echo "No update for AUR package found!"; echo; fi
 		# aur https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=<package>
 	      fi
 	   fi
@@ -541,6 +587,84 @@ if [ $1 == "chk" ];
 	echo " [OK]"
 	exit
    fi
+if [ $1 == "set" ];
+   then
+	if [ -z $2 ];
+	   then
+		echo
+		echo "  pac configuration editor, possible choices:"
+		echo
+		echo "  checkos (0, 1) check if the OS is Archlinux, set to 0 to bypass"
+		echo "  aurautoupdate (0, 1) enable auto update of aur package if set to 1"
+		echo "  autoupdate (0, 1) enable auto update of pac if set to 1"
+		echo "  tmpdirectory (directory) temp directory of pac"
+		echo "  moveaur (0, 1, 2) if set to 2, ask everytime where to put aur package"
+		echo "  noconfirm (0, 1, 2) if set to, 2 ask everytime to set noconfirm argument"
+		echo "  editor (0, 1, 2, 3) editor: Vim = 0, Leafpad = 1, SciTE = 2, vi = 3"
+		echo "  pacfolder (directory) pac directory, do not touch!!!"
+		echo
+		echo "  exemple: 'pac set autoupdate 0' to turn auto update of pac off"
+		echo "  use 'pac cfg' to see actual configuration"
+		echo
+		exit
+	   fi
+	if [ -z $2 ] || [ -z $3 ];
+	   then
+		echo "Error: argument missing"
+		exit
+	   fi
+	success="Successfully set '$2' to '$3'."
+	if [ $2 == "checkos" ];
+	   then
+		if [ "$3" != 0 ] && [ "$3" != 1 ]; then echo "Error: can't be other than 0 or 1"; exit; fi
+		sed -i "s|checkos=$checkos|checkos=$3|g" ~/.cache/pac/pac.config; echo $success; exit
+	   fi
+	if [ $2 == "aurautoupdate" ];
+	   then
+		if [ "$3" != 0 ] && [ "$3" != 1 ]; then echo "Error: can't be other than 0 or 1"; exit; fi
+		sed -i "s|aurautoupdate=$aurautoupdate|aurautoupdate=$3|g" ~/.cache/pac/pac.config; echo $success; exit
+	   fi
+	if [ $2 == "autoupdate" ];
+	   then
+		if [ "$3" != 0 ] && [ "$3" != 1 ]; then echo "Error: can't be other than 0 or 1"; exit; fi
+		sed -i "s|autoupdate=$autoupdate|autoupdate=$3|g" ~/.cache/pac/pac.config; echo $success; exit
+	   fi
+	if [ $2 == "tmpdirectory" ];
+	   then
+		dirtmp=$(echo $3 | sed 's/\/*$//')
+		if [ ! -d $3 ]; then echo "Error: directory doesn't exist! ($dirtmp)"; exit; fi
+		rdm=$dirtmp/$RANDOM-pac; touch $rdm 2> /dev/null; if [ ! -f $rdm ]; then echo "Error: can't write to specified folder! ($dirtmp)"; exit; else rm $rdm; fi
+		sed -i "s|tmpdirectory=$tmpdirectory|tmpdirectory=$dirtmp|g" ~/.cache/pac/pac.config; echo "Successfully set '$2' to '$dirtmp'."; exit
+	   fi
+	if [ $2 == "moveaur" ];
+	   then
+		if [ "$3" != 0 ] && [ "$3" != 1 ] && [ "$3" != 2 ]; then echo "Error: can't be other than 0, 1 or 2"; exit; fi
+		sed -i "s|moveaur=$moveaur|moveaur=$3|g" ~/.cache/pac/pac.config; echo $success; exit
+	   fi
+	if [ $2 == "noconfirm" ];
+	   then
+		if [ "$3" != 0 ] && [ "$3" != 1 ] && [ "$3" != 2 ]; then echo "Error: can't be other than 0, 1 or 2"; exit; fi
+		sed -i "s|noconfirm=$noconfirm|noconfirm=$3|g" ~/.cache/pac/pac.config; echo $success; exit
+	   fi
+	if [ $2 == "editor" ];
+	   then
+		if [ "$3" != 0 ] && [ "$3" != 1 ] && [ "$3" != 2 ] && [ "$3" != 3 ]; then echo "Error: can't be other than 0, 1, 2, or 3"; exit; fi
+		editorname="vi"
+		if [ "$3" == 0 ]; then if [ ! -f /usr/bin/vim ]; then echo "Error: Vim is not installed!"; exit; fi; editorname="Vim"; fi
+		if [ "$3" == 1 ]; then if [ ! -f /usr/bin/leafpad ]; then echo "Error: Leafpad is not installed!"; exit; fi; editorname="Leafpad"; fi
+		if [ "$3" == 2 ]; then if [ ! -f /usr/bin/scite ]; then echo "Error: SciTE is not installed!"; exit; fi; editorname="SciTE"; fi
+		sed -i "s|editor=$editor|editor=$3|g" ~/.cache/pac/pac.config; echo "Successfully set '$2' to '$editorname'."; exit
+	   fi
+	if [ $2 == "pacfolder" ];
+	   then
+		dirtmp=$(echo $3 | sed 's/\/*$//')
+		if [ ! -d $3 ]; then echo "Error: directory doesn't exist! ($dirtmp)"; exit; fi
+		rdm=$dirtmp/$RANDOM-pac; touch $rdm 2> /dev/null; if [ ! -f $rdm ]; then echo "Error: can't write to specified folder! ($dirtmp)"; exit; else rm $rdm; fi
+		sed -i "s|pacfolder=$pacfolder|pacfolder=$dirtmp|g" ~/.cache/pac/pac.config; echo "Successfully set '$2' to '$dirtmp'."; exit
+	   fi
+	echo "Error: wrong option '$2'"
+	exit
+   fi
 if [ $1 == "is" ];
    then
 	wget -q --tries=10 --timeout=20 --spider https://aur.archlinux.org/; if [[ ! $? -eq 0 ]]; then echo "aur.archlinux.org is unreachable, aborting..."; exit; fi
@@ -554,10 +678,7 @@ if [ $1 == "is" ];
 	   else
 	   while [ 1 ];
 	   do
-	      if [ -f /usr/bin/vim ]; then /usr/bin/vim PKGBUILD 2> /dev/null; break; fi
-	      if [ -f /usr/bin/leafpad ]; then /usr/bin/leafpad PKGBUILD 2> /dev/null; break; fi
-	      if [ -f /usr/bin/scite ]; then /usr/bin/scite PKGBUILD 2> /dev/null; break; fi
-	      vi PKGBUILD
+	      /usr/bin/$editor1 PKGBUILD 2> /dev/null; break
 	   done
 	   fi
 	rm -rf $newfolder
