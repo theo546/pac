@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# pac tool installer (r6) by theo546: https://github.com/theo546
+# pac tool installer (r7) by theo546: https://github.com/theo546
 # https://github.com/theo546/pac - GPLv3
 
+wget -q --tries=10 --timeout=20 --spider https://raw.githubusercontent.com/; if [[ ! $? -eq 0 ]]; then echo "raw.githubusercontent.com is unreachable, aborting..."; exit; fi
 echo "Checking dependencies..."
 if [ ! -f /usr/bin/git ];
    then
