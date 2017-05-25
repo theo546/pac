@@ -4,7 +4,7 @@
 # please, credit me if you use my tool, enjoy :D
 # https://github.com/theo546/pac - GPLv3
 
-version="1.0.5_1" # changelog: https://github.com/theo546/pac/blob/master/README.md
+version="1.0.6" # changelog: https://github.com/theo546/pac/blob/master/README.md
 log=$HOME/.cache/pac/logs/log-$(date +%Y-%m-%d_%H-%M-%S).txt # log directory
 
 if [ ! -f ~/.cache/pac/pac.config ]; then
@@ -17,9 +17,10 @@ if [ $checkos == 1 ] 2> /dev/null; # i add this here to prevent the creation of 
 		exit
 	   fi
    fi
-if [ ! -d ~/.cache/pac/logs ];
+if [ ! -d ~/.cache/pac/logs ] || [ ! -d ~/.cache/pac/cache ];
    then
 	mkdir -p ~/.cache/pac/logs
+	mkdir -p ~/.cache/pac/cache
 	sleep 0.1
    fi
 
@@ -29,13 +30,32 @@ if [ ! -f /usr/bin/pacman ];
 	echo "Error: Pacman is not found, please install it"
 	exit
    fi
-if [ ! -d ~/.cache/pac/cache ];
+if [ ! -f /usr/bin/git ];
    then
-	mkdir -p ~/.cache/pac/cache
+	echo "Error: Git is not found, starting installation..."
+	sudo pacman -S git
+	if [ ! -f /usr/bin/git ];
+	   then
+		echo "Error: Git is still not installed."
+		exit
+	   else echo "Git is now installed!"
+	   fi
+   fi
+if [ ! -f /usr/bin/jshon ];
+   then
+	echo "Error: Jshon is not found, starting installation..."
+	sudo pacman -S jshon
+	if [ ! -f /usr/bin/jshon ];
+	   then
+		echo "Error: Jshon is still not installed."
+		exit
+	   else echo "Jshon is now installed!"
+	   fi
    fi
 if [ ! -f ~/.cache/pac/pac.config ];
    then
 	echo "checkos=1 # put this on 0 if this fail and you are really on Archlinux." > ~/.cache/pac/pac.config
+	echo "aurautoupdate=1 # change this to 0 to disable auto update of the aur package when you do 'pac u'." >> ~/.cache/pac/pac.config
 	echo "autoupdate=1 # change this to 0 to disable auto update of pac when you do 'pac u'." >> ~/.cache/pac/pac.config
 	echo "tmpdirectory="/tmp" # change this only if you can't write in the /tmp directory." >> ~/.cache/pac/pac.config
 	echo "pacfolder="$HOME/.cache/pac" # don't touch!!!" >> ~/.cache/pac/pac.config
@@ -56,7 +76,7 @@ if [ $pacfolder ==  ] 2> /dev/null;
    fi
 if [ ! -d $pacfolder ];
    then
-	sed -i "s|$pacfolder|$HOME|g" ~/.cache/pac/pac.config
+	sed -i "s|$pacfolder|$HOME/.cache/pac|g" ~/.cache/pac/pac.config
 	. ~/.cache/pac/pac.config
 	sleep 0.1
    fi
@@ -72,6 +92,12 @@ if [ $checkos ==  ] 2> /dev/null;
 	. ~/.cache/pac/pac.config
 	sleep 0.1
    fi
+if [ $aurautoupdate ==  ] 2> /dev/null;
+   then
+	echo "aurautoupdate=1 # change this to 0 to disable auto update of the aur package when you do 'pac u'." >> ~/.cache/pac/pac.config
+	. ~/.cache/pac/pac.config
+	sleep 0.1
+   fi
 if [ $autoupdate ==  ] 2> /dev/null;
    then
 	echo "autoupdate=1 # change this to 0 to disable auto update of pac when you do 'pac u'." >> ~/.cache/pac/pac.config
@@ -81,28 +107,36 @@ if [ $autoupdate ==  ] 2> /dev/null;
 # delete temp directory of pac if exist
 rm -rf $tmpdirectory/*-pacAUR 2> /dev/null
 # aur function
+IPpkgname="";IPpkgdir="";IPrm="";IPreturn="";IPnoconfirm=""
 function InstallPackage() {
+if [ $1 == 0 ];
+   then
+	echo "An error occurred, please try again."
+   fi
 if [ ! -f PKGBUILD ];
    then
 	echo "Error: PKGBUILD doesn't exist!"
-	if [ $2 == "rm" ];
+	if [ $IPrm == "rm" ];
 	   then
-		if [ $1 == "install" ];
+		if [ $1 == 3 ];
 		   then
-			rm -rf $3 2> /dev/null
+			rm -rf $IPpkgdir 2> /dev/null
 			return
 		   fi
-		rm -rf $4 2> /dev/null
+		rm -rf $IPpkgdir 2> /dev/null
 	   fi
 	exit
    fi
-if [ $1 == "inspect" ];
+if [ $1 == 1 ];
    then
 	while true; do
 	  echo
-	  read -p "This is an AUR downloaded package, do you wan't to inspect the PKGBUILD before installing it (':q' to quit vi)? Y(es) or N(o)? " opt
+	  read -p "This is an AUR downloaded package, do you wan't to inspect the PKGBUILD before installing it (':q' to quit vi/vim)? Y(es) or N(o)? " opt
 	  case $opt in
 	    y|Y|yes|Yes)
+	      if [ -f /usr/bin/vim ]; then /usr/bin/vim PKGBUILD 2> /dev/null; break; fi
+	      if [ -f /usr/bin/leafpad ]; then /usr/bin/leafpad PKGBUILD 2> /dev/null; break; fi
+	      if [ -f /usr/bin/scite ]; then /usr/bin/scite PKGBUILD 2> /dev/null; break; fi
 	      vi PKGBUILD
 	      break
 	      ;;
@@ -112,59 +146,136 @@ if [ $1 == "inspect" ];
 	      ;;
 	  esac
 	done
-	if [ $5 == "r" ] 2> /dev/null;
+	if [ $IPreturn == "r" ] 2> /dev/null;
 	then
 		return
 	fi
-	InstallPackage confirm $2 $3 $4
+	InstallPackage 2
    fi
-if [ $1 == "confirm" ];
+if [ $1 == 2 ];
    then
 	while true; do
 		echo
-		read -p "Do you wan't to install $3? Y(es) or N(o)? " opt
+		read -p "Do you wan't to install $IPpkgname? Y(es) or N(o)? " opt
 		case $opt in
 		    y|Y|yes|Yes)
 		      echo "All right, let's go!"
-		      InstallPackage install $2 $4 $3
+		      InstallPackage 3
 		      break
 		      ;;
 		    n|N|no|No)
 		      echo "Aborting..."
-		      if [ $2 == "rm" ] 2> /dev/null;
+		      if [ $IPrm == "rm" ] 2> /dev/null;
 		         then
-				rm -rf $4 2> /dev/null
+				rm -rf $IPpkgdir 2> /dev/null
 			 fi
 		      exit
 		      ;;
 		esac
 	done
    fi
-if [ $1 == "install" ];
+if [ $1 == 3 ];
    then
-	makepkg -si
-	echo "Everything is done (at least, for pac)."
-	getverpkgtxt=$(grep -rF "PKGBUILD" -e "pkgver=")
-	getverpkgtxt2=$(sed -e 's#.*=\(\)#\1#' <<< "$getverpkgtxt")
-	if [ $4 == ] 2> /dev/null;
+	makepkg -si $IPnoconfirm
+	if [ "$(pacman -Qq $IPpkgname 2> /dev/null)" != "$IPpkgname" ];
 	   then
-		linedb2=$(awk "/$2/{ print NR; exit }" $pacfolder/pkg.txt)
-		namepkg=$2
-	   else
-		linedb2=$(awk "/$4/{ print NR; exit }" $pacfolder/pkg.txt)
-		namepkg=$4
+		echo "Error: the package has not been installed."
+		exit
 	   fi
+	getverpkgtxt=$(grep -rF "PKGBUILD" -e "pkgver=" | tr -d '"' | tr -d "'")
+	getverpkgtxt2=$(sed -e 's#.*=\(\)#\1#' <<< "$getverpkgtxt")
+	getrelpkgtxt=$(grep -rF "PKGBUILD" -e "pkgrel=" | tr -d '"' | tr -d "'")
+	getrelpkgtxt2=$(sed -e 's#.*=\(\)#\1#' <<< "$getrelpkgtxt")
+	linedb2=$(awk "/$IPpkgname/{ print NR; exit }" $pacfolder/pkg.txt)
 	if [ ! $linedb2 == "" ];
 	   then
 		sed -i "$linedb2 d" $pacfolder/pkg.txt
 	   fi
-	echo "$namepkg $getverpkgtxt2" >> $pacfolder/pkg.txt
-	if [ $2 == "rm" ];
+	if [ $getrelpkgtxt2 == ] 2> /dev/null;
 	   then
-		rm -rf $3 2> /dev/null
+		verrel=$getverpkgtxt2
+		else verrel=$getverpkgtxt2-$getrelpkgtxt2
 	   fi
+	echo "$IPpkgname $verrel" >> $pacfolder/pkg.txt
+	CheckDb
+	if [ $IPrm == "rm" ] 2> /dev/null;
+	   then
+		rm -rf $IPpkgdir 2> /dev/null
+	   fi
+	echo "Everything is done, $IPpkgname has been successfully installed."
    fi
-exit
+}
+WriteDB() {
+linedb=$(awk "/$1/{ print NR; exit }" $pacfolder/db.txt)
+getver=$(grep -rF "$pacfolder/cache/$2-$1/PKGBUILD" -e "pkgver=" | tr -d '"' | tr -d "'")
+getver2=$(sed -e 's#.*=\(\)#\1#' <<< "$getver")
+getrel=$(grep -rF "$pacfolder/cache/$2-$1/PKGBUILD" -e "pkgrel=" | tr -d '"' | tr -d "'")
+getrel2=$(sed -e 's#.*=\(\)#\1#' <<< "$getrel")
+dbdir=$pacfolder/db.txt
+if [ ! $linedb == "" ];
+   then
+	sed -i "$linedb d" $dbdir
+   fi
+if [ $getrel2 == ] 2> /dev/null;
+   then
+	verrel=$getver2
+   else verrel=$getver2-$getrel2
+   fi
+echo "$1 $pacfolder/cache/$2-$1 $verrel" >> $pacfolder/db.txt
+}
+CheckDb() { 
+Chk; Chk2 
+}
+Chk() {
+numberline=$(wc -l < $pacfolder/db.txt)
+COUNTER=1; BLANK_LINE=0
+let numberline=numberline+2
+while [  $COUNTER -lt $numberline ];
+do
+	linepkgstringdir=$(sed "$COUNTER q;d" $pacfolder/db.txt)
+	packagedirectory=$(echo $linepkgstringdir | cut -d " " -f 2)
+	IGN=0
+	if [ "$packagedirectory" == "" ] 2> /dev/null; then
+		let BLANK_LINE=BLANK_LINE+1
+		IGN=1
+		sed -i "$COUNTER d" $pacfolder/db.txt
+		if [ $BLANK_LINE == 25 ] && [ $1 == "2" ] 2> /dev/null; then return; fi
+		if [ $BLANK_LINE == 25 ]; then Chk 2; return; fi
+		if [ $COUNTER != 1 ]; then let COUNTER=COUNTER-1; fi
+	   fi
+	if [ ! -d "$packagedirectory" ] && [ $IGN == 0 ] 2> /dev/null;
+	   then
+		sed -i "$COUNTER d" $pacfolder/db.txt
+		if [ $COUNTER != 1 ]; then let COUNTER=COUNTER-1; IGN=1; fi
+	   fi
+	if [ $IGN == 0 ]; then let COUNTER=COUNTER+1;fi
+done
+}
+Chk2() {
+numberline2=$(wc -l < $pacfolder/pkg.txt)
+COUNTER2=1; BLANK_LINE2=0
+let numberline2=numberline2+2
+while [  $COUNTER2 -lt $numberline2 ];
+do
+	linepkgstring=$(sed "$COUNTER2 q;d" $pacfolder/pkg.txt)
+	packagename=$(echo $linepkgstring | cut -d " " -f 1)
+	pacmanchk=$(pacman -Qq $packagename 2> /dev/null)
+	IGN2=0
+	if [ "$packagename" == "" ] 2> /dev/null; then
+		let BLANK_LINE2=BLANK_LINE2+1
+		IGN2=1
+		sed -i "$COUNTER2 d" $pacfolder/pkg.txt
+		if [ $BLANK_LINE2 == 25 ] && [ $1 == "2" ] 2> /dev/null; then return; fi
+		if [ $BLANK_LINE2 == 25 ]; then Chk2 2; return; fi
+		if [ $COUNTER2 != 1 ]; then let COUNTER2=COUNTER2-1; fi
+	   fi
+	if [ "$pacmanchk" != "$packagename" ] && [ $IGN2 == 0 ] 2> /dev/null;
+	   then
+		sed -i "$COUNTER2 d" $pacfolder/pkg.txt
+		if [ $COUNTER2 != 1 ]; then let COUNTER2=COUNTER2-1; IGN2=1; fi
+	   fi
+	if [ $IGN2 == 0 ]; then let COUNTER2=COUNTER2+1;fi
+done
 }
 ###
 if [ -z $1 ];
@@ -181,18 +292,22 @@ if [ $1 == "help" ];
 	echo "	'pac PackageName' to install a package."
 	echo "	'pac u' to start a system update."
 	echo "	'pac ud' to update the Pacman database."
+	echo "	'pac i [Directory of Package]' to install a 'tar.xz' package."
 	echo "	'pac r PackageName' to delete a package."
 	echo "	'pac cc' to clear Pacman cache."
-	echo "	'pac c Argument' to use Pacman with custom argument. (ex: pac c sy)"
-	echo "	'pac aur AURPacketName [Directory]' to install an AUR package."
+	echo "	'pac aur AURPackageName (Directory)' to install an AUR package."
+	echo "	'pac is AURPackageName' to inspect a PKGBUILD of an AUR package."
+	echo "	'pac s' to search a package in Pacman and AUR."
+	echo "	'pac -Argument' to use Pacman with custom argument. (ex: pac -Sy)"
+	echo "	'pac chk' to check 'db.txt' and 'pkg.txt'"
 	echo "	'pac info' to get pac configuration info."
-	echo "	pac tool $version by theo546; https://github.com/theo546/pac"
+	echo "	pac tool $version by theo546; https://github.com/theo546/pac - GPLv3"
 	echo
 	exit
    fi
 if [ $1 == "info" ];
    then
-	echo "pacfolder = $pacfolder, checkos = $checkos, autoupdate = $autoupdate, tmpdirectory = $tmpdirectory, version = $version"
+	echo "pacfolder = $pacfolder, checkos = $checkos, aurautoupdate = $aurautoupdate, autoupdate = $autoupdate, tmpdirectory = $tmpdirectory, version = $version"
 	echo "cache folder: $pacfolder/cache - log folder: $pacfolder/logs"
 	exit
    fi
@@ -206,7 +321,7 @@ if [ $1 == "u" ];
 		if [ $content != $version ];
 		   then
 			rdname=$tmpdirectory/$RANDOM-pac
-			echo " New update for pac found! (current: $version, update: $content)"
+			echo " New update for pac found! (c: $version, u: $content)"
 			wget https://raw.githubusercontent.com/theo546/pac/master/pac/pac -q -O $rdname
 			if [ ! -f $rdname ];
 			   then
@@ -232,9 +347,95 @@ if [ $1 == "u" ];
 				exit
 			   else sudo rm /usr/bin/pac; sudo mv $rdname /usr/bin/pac; sudo chmod +x /usr/bin/pac
 			fi
-			echo " [OK]"; echo "Update successfully checked and installed!"
+			echo " [OK]"; echo "Update successfully checked and installed!"; pac u $2; exit
 			else echo " No update found!"
 		   fi
+	   fi
+	if [ $aurautoupdate == 1 ];
+	   then
+		while true; do
+			echo
+			read -p "Do you wan't to download the AUR package in $pacfolder/cache? Y(es) or N(o)? " opt
+			case $opt in
+			    y|Y|yes|Yes)
+			      echo "All right, they are moved to the cache folder."
+			      moveaur=1
+			      break
+			      ;;
+			    n|N|no|No)
+			      echo "All right, they will be removed after installation"
+			      moveaur=0
+			      break
+			      ;;
+			esac
+		done
+		while true; do
+			echo
+			read -p "Do you wan't to use the '--noconfirm' argument to install quickly the update(you still need to inspect the PKGBUILD)? Y(es) or N(o)? " opt
+			case $opt in
+			    y|Y|yes|Yes)
+			      echo "All right, '--noconfirm' argument added, checking for update now."
+			      noconfirm="--noconfirm"
+			      break
+			      ;;
+			    n|N|no|No)
+			      echo "Ok, no '--noconfirm' argument, checking for update now."
+			      break
+			      ;;
+			esac
+		done
+		echo
+		CheckDb
+		sleep 0.1
+		numberline=$(wc -l < $pacfolder/pkg.txt)
+		updatefound=0
+		for i in $(seq $numberline)
+		do
+		   linepkgstring=$(sed "$i q;d" $pacfolder/pkg.txt)
+		   packagename=$(echo $linepkgstring | cut -d " " -f 1); versionstring=$(echo $linepkgstring | cut -d " " -f 2)
+		   if [ $moveaur == 1 ];
+		      then
+			randomname=$RANDOM$RANDOM$RANDOM;newfolder=$pacfolder/cache/$randomname-$packagename
+			else newfolder=$tmpdirectory/$RANDOM$RANDOM$RANDOM-pacAUR; cdtofolder=$packagename; rm="rm"
+		      fi
+		   mkdir $newfolder; cd $newfolder
+		   wget https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=$packagename -q -O $newfolder/PKGBUILD
+		   if [ ! -s $newfolder/PKGBUILD ] 2> /dev/null;
+			then
+				abort=1; rm -rf $newfolder
+			else abort=0
+			fi
+		   if [ $abort == 0 ];
+		      then
+			   getverpkgtxt=$(grep -rF "PKGBUILD" -e "pkgver=" | tr -d '"' | tr -d "'")
+			   getverpkgtxt2=$(sed -e 's#.*=\(\)#\1#' <<< "$getverpkgtxt")
+			   getrelpkgtxt=$(grep -rF "PKGBUILD" -e "pkgrel=" | tr -d '"' | tr -d "'")
+			   getrelpkgtxt2=$(sed -e 's#.*=\(\)#\1#' <<< "$getrelpkgtxt")
+			   if [ $getrelpkgtxt2 == ] 2> /dev/null;
+				then
+					verrel=$getverpkgtxt2
+				else verrel=$getverpkgtxt2-$getrelpkgtxt2
+				fi
+			   if [ $versionstring != $verrel ] 2> /dev/null;
+			      then
+				echo "New update for $packagename found! Installing it..."
+				echo "(current: $versionstring, update: $verrel)"
+				let updatefound=1
+				rm PKGBUILD
+				if [ -f PKGBUILD ]; then echo "Error: PKGBUILD can't be deleted"; rm -rf $newfolder 2> /dev/null; exit; fi
+				git clone https://aur.archlinux.org/$packagename.git
+				if [ $moveaur == 1 ]; then mv $packagename/* $newfolder/$cdtofolder; fi
+				cd $newfolder/$cdtofolder
+				if [ ! -f PKGBUILD ]; then echo "Error: PKGBUILD doesn't exist!"; rm -rf $newfolder 2> /dev/null; exit; fi
+				if [ $moveaur == 1 ]; then WriteDB $packagename $randomname; fi
+				IPpkgname="$packagename";IPpkgdir="$newfolder";IPrm="$rm";IPnoconfirm="$noconfirm";InstallPackage 1
+				if [ $moveaur == 0 ]; then rm -rf $newfolder; fi
+			      else rm -rf $newfolder
+			      fi
+		      fi
+		done
+		if [ $updatefound == 1 ]; then CheckDb; echo; echo "AUR update is done!"; else echo "No update found for AUR package!"; echo; fi
+		# aur https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=
 	   fi
 	exit
    fi
@@ -243,9 +444,26 @@ if [ $1 == "ud" ];
 	sudo pacman -Sy
 	exit
    fi
+if [ $1 == "i" ];
+   then
+	if [ $2 == ] 2> /dev/null;
+	   then
+		echo "Error: nothing to install."
+		exit
+	   fi
+	if [ ! -f $2 ] 2> /dev/null; then echo "Error: '$2' doesn't exist."; exit; fi; if [ ! -f $3 ] 2> /dev/null; then echo "Error: '$3' doesn't exist."; exit; fi
+	if [ ! -f $4 ] 2> /dev/null; then echo "Error: '$4' doesn't exist."; exit; fi; if [ ! -f $5 ] 2> /dev/null; then echo "Error: '$5' doesn't exist."; exit; fi
+	if [ ! -f $6 ] 2> /dev/null; then echo "Error: '$6' doesn't exist."; exit; fi; if [ ! -f $7 ] 2> /dev/null; then echo "Error: '$7' doesn't exist."; exit; fi
+	if [ ! -f $8 ] 2> /dev/null; then echo "Error: '$8' doesn't exist."; exit; fi; if [ ! -f $9 ] 2> /dev/null; then echo "Error: '$9' doesn't exist."; exit; fi
+	echo "If you are installing (a) package from AUR, use 'pac aur PackageName' instead please, it's better for update."
+	sudo pacman -U $2 $3 $4 $5 $6 $7 $8 $9
+	CheckDb
+	exit
+   fi
 if [ $1 == "r" ];
    then
 	sudo pacman -R $2 $3 $4 $5 $6 $7 $8 $9
+	CheckDb
 	exit
    fi
 if [ $1 == "cc" ];
@@ -253,29 +471,84 @@ if [ $1 == "cc" ];
 	sudo pacman -Sc
 	exit
    fi
-if [ $1 == "c" ];
+if [[ $1 == -* ]];
    then
-	sudo pacman -${2^} $3 $4 $5 $6 $7 $8 $9
+	sudo pacman $*
+	CheckDb
+	exit
+   fi
+if [ $1 == "s" ];
+   then
+	if [ $2 == ] 2> /dev/null;
+	   then
+		echo "Error: nothing to search."
+		exit
+	   fi
+	result=$(pacman -Ss ${2^})
+	if [ $result == ] 2> /dev/null;
+	   then
+		echo -n
+	   else echo "$result" 
+	   fi
+	rpc=$(wget "https://aur.archlinux.org/rpc.php?type=search&arg=$2" -q -O -)
+	resultcount=$(echo "$rpc" | jshon -e resultcount -u)
+	if [ $resultcount == 0 ]; then exit; fi
+	randomdirectorysearch=$tmpdirectory/$RANDOM$RANDOM$RANDOM-pacAUR; mkdir $randomdirectorysearch; cd $randomdirectorysearch
+	echo "$rpc" | jshon -e results -a -e Name -u > $randomdirectorysearch/name
+	echo "$rpc" | jshon -e results -a -e Version -u > $randomdirectorysearch/version
+	echo "$rpc" | jshon -e results -a -e Description -u > $randomdirectorysearch/description
+	let resultcount=resultcount+1; COUNTER3=1
+	while [  $COUNTER3 -lt $resultcount ];
+	do
+		echo -n aur/
+		resultn=$(sed "$COUNTER3 q;d" "$randomdirectorysearch/name"); echo -n $resultn
+		result2=$(sed "$COUNTER3 q;d" "$randomdirectorysearch/version"); echo -n " $result2"
+		if [ "$(pacman -Qq $resultn 2> /dev/null)" == "$resultn" ];
+		   then
+			echo " [installed]"
+		   else echo
+		   fi
+		result2=$(sed "$COUNTER3 q;d" "$randomdirectorysearch/description")
+		if [ $result2 == ] 2> /dev/null;
+		   then
+			echo "    No description."
+		   else echo "    $result2"
+		   fi
+		let COUNTER3=COUNTER3+1
+	done
+	cd $tmpdirectory; rm -rf $randomdirectorysearch
+	exit
+   fi
+if [ $1 == "chk" ];
+   then
+	echo -n "Verification of the database (pkg.txt and db.txt)..."
+	CheckDb
+	echo " [OK]"
+	exit
+   fi
+if [ $1 == "is" ];
+   then
+	newfolder=$tmpdirectory/$RANDOM$RANDOM$RANDOM-pacAUR
+	mkdir $newfolder; cd $newfolder
+	wget https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=$2 -q -O $newfolder/PKGBUILD
+	if [ ! -s $newfolder/PKGBUILD ] 2> /dev/null;
+	   then
+		echo "Error: the PKGBUILD is corrupted."
+		exit
+	   else
+	   while [ 1 ];
+	   do
+	      if [ -f /usr/bin/vim ]; then /usr/bin/vim PKGBUILD 2> /dev/null; break; fi
+	      if [ -f /usr/bin/leafpad ]; then /usr/bin/leafpad PKGBUILD 2> /dev/null; break; fi
+	      if [ -f /usr/bin/scite ]; then /usr/bin/scite PKGBUILD 2> /dev/null; break; fi
+	      vi PKGBUILD
+	   done
+	   fi
+	rm -rf $newfolder
 	exit
    fi
 if [ $1 == "aur" ];
  then
-   if [ $2 == "rm" ];
-      then
-	echo "Error: forbidden package name!"
-        exit
-      fi
-   if [ ! -f /usr/bin/git ];
-   then
-	echo "Error: Git is not found, starting installation..."
-	sudo pacman -S git
-	if [ ! -f /usr/bin/git ];
-	   then
-		echo "Error: Git is still not installed."
-		exit
-	   else echo "Git is now installed, pac aur is ready to use!"
-	   fi
-   fi
    if [ -z $3 ];
    then
 	if [[ $(cat $pacfolder/db.txt) == *"$2"* ]];
@@ -301,8 +574,8 @@ if [ $1 == "aur" ];
 					echo "Error: can't access the folder! ($aurdl)"
 					exit
 				fi
-			      InstallPackage inspect $2
-			      break
+			      IPpkgname="$2"; InstallPackage 1
+			      exit
 			      ;;
 			    n|N|no|No)
 			      echo "Ok, a new download will be make for this package!"
@@ -327,36 +600,28 @@ if [ $1 == "aur" ];
 		rm -rf $randomfolder
 		exit
 	   fi
-	InstallPackage inspect rm $2 $randomfolder r
+	IPpkgname="$2";IPpkgdir="$randomfolder";IPrm="rm";IPreturn="r"; InstallPackage 1
 	while true; do
 		echo
 		read -p "Do you wan't the files to be moved to $pacfolder/cache/$randomtmp-$2? If not, it will be removed after the installation. Y(es) or N(o)? " opt
 		case $opt in
 		    y|Y|yes|Yes)
-		      echo "Ok, the downloaded file will be moved to the cache directory."
+		      echo "Ok, the downloaded files will be moved to the cache directory."
 		      mkdir $pacfolder/cache/$randomtmp-$2
 		      mv $randomfolder/$2/* $pacfolder/cache/$randomtmp-$2
 		      cd $pacfolder/cache/$randomtmp-$2
 		      rm -rf $randomfolder
-		      randomfolder=/dev/null
-		      linedb=$(awk "/$2/{ print NR; exit }" $pacfolder/db.txt)
-		      getver=$(grep -rF "$pacfolder/cache/$randomtmp-$2/PKGBUILD" -e "pkgver=")
-		      getver2=$(sed -e 's#.*=\(\)#\1#' <<< "$getver")
-		      if [ ! $linedb == "" ];
-		         then
-				sed -i "$linedb d" $dbdir
-		         fi
-		      dbdir=$pacfolder/db.txt
-		      echo "$2 $pacfolder/cache/$randomtmp-$2 $getver2" >> $pacfolder/db.txt
+		      unset randomfolder
+		      WriteDB $2 $randomtmp
 		      break
 		      ;;
 		    n|N|no|No)
-		      echo "Ok, the downloaded file will be removed after the installation."
+		      echo "Ok, the downloaded files will be removed after the installation."
 		      break
 		      ;;
 		esac
 	done
-	InstallPackage confirm rm $2 $randomfolder
+	IPpkgname="$2";IPpkgdir="$randomfolder";IPrm="rm"; InstallPackage 2
 	exit
    else
 	dirtmp=$(echo $3 | sed 's/\/*$//')
@@ -379,7 +644,7 @@ if [ $1 == "aur" ];
 		echo "Error: can't access the downloaded folder! ($dirtmp2)"
 		exit
 	   fi
-	InstallPackage inspect $2
+	IPpkgname="$2"; InstallPackage 1
 	exit
    fi
  fi
