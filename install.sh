@@ -1,9 +1,33 @@
 #!/bin/bash
 
-# pac tool install by theo546: https://github.com/theo546
+# pac tool installer (r6) by theo546: https://github.com/theo546
 # https://github.com/theo546/pac - GPLv3
 
-echo "Started installation of pac..."
+echo "Checking dependencies..."
+if [ ! -f /usr/bin/git ];
+   then
+	echo "Error: Git is not found, starting installation..."
+	sudo pacman -S git
+	if [ ! -f /usr/bin/git ];
+	   then
+		echo "Error: Git is still not installed."
+		exit
+	   else echo "Git is now installed!"
+	   fi
+   fi
+if [ ! -f /usr/bin/jshon ];
+   then
+	echo "Error: Jshon is not found, starting installation..."
+	sudo pacman -S jshon
+	if [ ! -f /usr/bin/jshon ];
+	   then
+		echo "Error: Jshon is still not installed."
+		exit
+	   else echo "Jshon is now installed!"
+	   fi
+   fi
+echo "Dependencies checked!"
+echo "Starting installation of pac..."
 rdname=/tmp/$RANDOM-pac
 wget https://raw.githubusercontent.com/theo546/pac/master/pac/pac -q -O $rdname
 if [ ! -f $rdname ];
