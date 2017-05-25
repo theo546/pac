@@ -1,6 +1,6 @@
-  _       
- |_) _  _
- |  (_|(_
+  _       <br>
+ |_) _  _ <br>
+ |  (_|(_ <br>
 Pac is an useful tool for Archlinux who interact with Pacman, and can download package from AUR!
 
 ## Installation
