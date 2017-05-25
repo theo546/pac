@@ -4,7 +4,7 @@
 # please, credit me if you use my tool, enjoy :D
 # https://github.com/theo546/pac - GPLv3
 
-version="1.0.6" # changelog: https://github.com/theo546/pac/blob/master/README.md
+version="1.0.6_1" # changelog: https://github.com/theo546/pac/blob/master/README.md
 log=$HOME/.cache/pac/logs/log-$(date +%Y-%m-%d_%H-%M-%S).txt # log directory
 
 if [ ! -f ~/.cache/pac/pac.config ]; then
@@ -186,22 +186,28 @@ if [ $1 == 3 ];
 	getverpkgtxt2=$(sed -e 's#.*=\(\)#\1#' <<< "$getverpkgtxt")
 	getrelpkgtxt=$(grep -rF "PKGBUILD" -e "pkgrel=" | tr -d '"' | tr -d "'")
 	getrelpkgtxt2=$(sed -e 's#.*=\(\)#\1#' <<< "$getrelpkgtxt")
-	linedb2=$(awk "/$IPpkgname/{ print NR; exit }" $pacfolder/pkg.txt)
-	if [ ! $linedb2 == "" ];
-	   then
-		sed -i "$linedb2 d" $pacfolder/pkg.txt
-	   fi
 	if [ $getrelpkgtxt2 == ] 2> /dev/null;
 	   then
 		verrel=$getverpkgtxt2
 		else verrel=$getverpkgtxt2-$getrelpkgtxt2
 	   fi
-	echo "$IPpkgname $verrel" >> $pacfolder/pkg.txt
-	CheckDb
 	if [ $IPrm == "rm" ] 2> /dev/null;
 	   then
 		rm -rf $IPpkgdir 2> /dev/null
 	   fi
+	pacmancheck="$(pacman -Q $IPpkgname 2> /dev/null)"
+	if [ $pacmancheck != "$IPpkgname $verrel" ]
+	   then
+		echo "Warning: the installed package has a different version than AUR downloaded package ($pacmancheck)"
+		$verrel=$pacmancheck
+	   fi
+	linedb2=$(awk "/$IPpkgname/{ print NR; exit }" $pacfolder/pkg.txt)
+	if [ ! $linedb2 == "" ];
+	   then
+		sed -i "$linedb2 d" $pacfolder/pkg.txt
+	   fi
+	echo "$IPpkgname $verrel" >> $pacfolder/pkg.txt
+	CheckDb
 	echo "Everything is done, $IPpkgname has been successfully installed."
    fi
 }
@@ -316,6 +322,9 @@ if [ $1 == "u" ];
 	sudo pacman -Syu $2
 	if [ $autoupdate == 1 ];
 	   then
+	   wget -q --tries=10 --timeout=20 --spider https://raw.githubusercontent.com/; if [[ $? -eq 0 ]]; then skippacupdate=0; else skippacupdate=1; echo "raw.githubusercontent.com is unreachable, skipping pac update..."; fi
+	   if [ $skippacupdate == 0 ];
+	      then
 		echo -n "Checking update for pac..."
 		content=$(wget https://raw.githubusercontent.com/theo546/pac/master/pac/version -q -O -)
 		if [ $content != $version ];
@@ -349,10 +358,14 @@ if [ $1 == "u" ];
 			fi
 			echo " [OK]"; echo "Update successfully checked and installed!"; pac u $2; exit
 			else echo " No update found!"
-		   fi
+		fi
+	      fi
 	   fi
 	if [ $aurautoupdate == 1 ];
 	   then
+	   wget -q --tries=10 --timeout=20 --spider https://aur.archlinux.org/; if [[ $? -eq 0 ]]; then skipaur=0; else skipaur=1; echo "aur.archlinux.org is unreachable, skipping AUR update..."; fi
+	   if [ $skipaur == 0 ];
+	      then
 		while true; do
 			echo
 			read -p "Do you wan't to download the AUR package in $pacfolder/cache? Y(es) or N(o)? " opt
@@ -434,8 +447,9 @@ if [ $1 == "u" ];
 			      fi
 		      fi
 		done
-		if [ $updatefound == 1 ]; then CheckDb; echo; echo "AUR update is done!"; else echo "No update found for AUR package!"; echo; fi
-		# aur https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=
+		if [ $updatefound == 1 ]; then CheckDb; echo; echo "AUR package update done!"; else echo "No update for AUR package found!"; echo; fi
+		# aur https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=<package>
+	      fi
 	   fi
 	exit
    fi
@@ -490,6 +504,7 @@ if [ $1 == "s" ];
 		echo -n
 	   else echo "$result" 
 	   fi
+	wget -q --tries=10 --timeout=20 --spider https://aur.archlinux.org/; if [[ ! $? -eq 0 ]]; then echo "aur.archlinux.org is unreachable, aborting AUR search..."; exit; fi
 	rpc=$(wget "https://aur.archlinux.org/rpc.php?type=search&arg=$2" -q -O -)
 	resultcount=$(echo "$rpc" | jshon -e resultcount -u)
 	if [ $resultcount == 0 ]; then exit; fi
@@ -528,6 +543,7 @@ if [ $1 == "chk" ];
    fi
 if [ $1 == "is" ];
    then
+	wget -q --tries=10 --timeout=20 --spider https://aur.archlinux.org/; if [[ ! $? -eq 0 ]]; then echo "aur.archlinux.org is unreachable, aborting..."; exit; fi
 	newfolder=$tmpdirectory/$RANDOM$RANDOM$RANDOM-pacAUR
 	mkdir $newfolder; cd $newfolder
 	wget https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=$2 -q -O $newfolder/PKGBUILD
@@ -549,6 +565,11 @@ if [ $1 == "is" ];
    fi
 if [ $1 == "aur" ];
  then
+   if [ $2 == ] 2> /dev/null;
+      then
+	echo "Error: nothing specified"
+	exit
+      fi
    if [ -z $3 ];
    then
 	if [[ $(cat $pacfolder/db.txt) == *"$2"* ]];
@@ -584,6 +605,7 @@ if [ $1 == "aur" ];
 			esac
 		done
 	   fi
+	wget -q --tries=10 --timeout=20 --spider https://aur.archlinux.org/; if [[ ! $? -eq 0 ]]; then echo "aur.archlinux.org is unreachable, aborting AUR download..."; exit; fi
 	randomtmp=$RANDOM$RANDOM$RANDOM
 	randomfolder=$tmpdirectory/$randomtmp-pacAUR; mkdir $randomfolder
 	cd $randomfolder
@@ -624,6 +646,7 @@ if [ $1 == "aur" ];
 	IPpkgname="$2";IPpkgdir="$randomfolder";IPrm="rm"; InstallPackage 2
 	exit
    else
+	wget -q --tries=10 --timeout=20 --spider https://aur.archlinux.org/; if [[ ! $? -eq 0 ]]; then echo "aur.archlinux.org is unreachable, aborting AUR download..."; exit; fi
 	dirtmp=$(echo $3 | sed 's/\/*$//')
 	cd $dirtmp 2> /dev/null
 	if [ $dirtmp != $PWD ];
