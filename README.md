@@ -24,6 +24,8 @@ Allow execution: chmod +x /usr/bin/pac
 ```
 
 ## Change log
+1.0.6_1 added verification to see if the computer is connected to internet<br>
+    - and added verification to see if the installed package is different from aur downloaded, fixed a bug with 'pac aur'.<br>
 1.0.6 added update system for aur package, added search function, added inspection without installing<br>
     - added the 'i' function to install tar.xz package, added verification of the database, optimized the code and fixed bugs<br>
 1.0.5_1 fixed a bug for the upcoming aur updater system and optimized some code<br>
