@@ -1,6 +1,4 @@
-  _       <br>
- |_) _  _ <br>
- |  (_|(_ <br>
+# pac
 Pac is an useful tool for Archlinux who interact with Pacman, and can download package from AUR!
 
 ## Installation
@@ -26,6 +24,8 @@ Allow execution: chmod +x /usr/bin/pac
 ```
 
 ## Change log
+1.0.6 added update system for aur package, added search function, added inspection without installing<br>
+    - added the 'i' function to install tar.xz package, added verification of the database, optimized the code and fixed bugs<br>
 1.0.5_1 fixed a bug for the upcoming aur updater system and optimized some code<br>
 1.0.5 big update! changed form of 'pac help', optimized a little bit the code(with function)<br>
     - added version of aur package for future update system for aur!<br>
