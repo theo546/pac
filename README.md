@@ -24,6 +24,7 @@ Allow execution: chmod +x /usr/bin/pac
 ```
 
 ## Change log
+1.0.7_1 fixed a bug with directory, updater now check if an update has been already downloaded, optimized some code<br>
 1.0.7 you can now config pac directly with 'pac set'! pac info is now 'pac cfg' and have a new look<br>
     - added an option to 'pac u' where you can skip pacman update by doing 'pac u 1'<br>
 1.0.6_1 added verification to see if the computer is connected to internet<br>
