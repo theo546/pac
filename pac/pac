@@ -4,7 +4,7 @@
 # please, credit me if you use my tool, enjoy :D
 # https://github.com/theo546/pac - GPLv3
 
-version="1.0.7_2" # changelog: https://github.com/theo546/pac/blob/master/README.md
+version="1.0.7_3" # changelog: https://github.com/theo546/pac/blob/master/README.md
 log=$HOME/.cache/pac/logs/log-$(date +%Y-%m-%d_%H-%M-%S).txt # log directory
 
 if [ ! -f ~/.cache/pac/pac.config ]; then
@@ -503,9 +503,9 @@ if [ $1 == "u" ];
 						   then
 							while true; do
 								echo
-								read -p "Do you wan't to install the previously downloaded $aurdl? If not, a new one will be downloaded. Y(es) or N(o)? " opt
+								read -p "Do you wan't to install the previously downloaded $aurdl? If not, a new one will be downloaded. Y(es) or N(o), A(bort)? " opt
 								case $opt in
-								    y|Y|yes|Yes)
+								    y*|Y*)
 								      echo "Ok, let's install the downloaded one."
 								      cd $aurdl
 								      if [ $PWD != "$aurdl" ];
@@ -516,9 +516,13 @@ if [ $1 == "u" ];
 								      IPpkgname="$packagename";IPnoconfirm="$noconfirm";InstallPackage 1
 								      exit
 								      ;;
-								    n|N|no|No)
+								    n*|N*)
 								      echo "Ok, a new download will be make for this package!"
 								      break
+								      ;;
+								    a*|A*)
+								      echo "Aborting..."
+								      exit
 								      ;;
 								esac
 							done
@@ -752,9 +756,9 @@ if [ $1 == "aur" ];
 		   fi
 		while true; do
 			echo
-			read -p "Do you wan't to install the previously downloaded $aurdl? If not, a new one will be downloaded. Y(es) or N(o)? " opt
+			read -p "Do you wan't to install the previously downloaded $aurdl? If not, a new one will be downloaded. Y(es) or N(o), A(bort)? " opt
 			case $opt in
-			    y|Y|yes|Yes)
+			    y*|Y*)
 			      echo "Ok, let's install the downloaded one."
 			      cd $aurdl
 			      if [ $PWD != "$aurdl" ];
@@ -765,9 +769,13 @@ if [ $1 == "aur" ];
 			      IPpkgname="$2"; InstallPackage 1
 			      exit
 			      ;;
-			    n|N|no|No)
+			    n*|N*)
 			      echo "Ok, a new download will be make for this package!"
 			      break
+			      ;;
+			    a*|A*)
+			      echo "Aborting..."
+			      exit
 			      ;;
 			esac
 		done
