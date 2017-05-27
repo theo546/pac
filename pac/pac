@@ -4,7 +4,7 @@
 # please, credit me if you use my tool, enjoy :D
 # https://github.com/theo546/pac - GPLv3
 
-version="1.0.7" # changelog: https://github.com/theo546/pac/blob/master/README.md
+version="1.0.7_1" # changelog: https://github.com/theo546/pac/blob/master/README.md
 log=$HOME/.cache/pac/logs/log-$(date +%Y-%m-%d_%H-%M-%S).txt # log directory
 
 if [ ! -f ~/.cache/pac/pac.config ]; then
@@ -310,6 +310,12 @@ do
 	if [ $IGN2 == 0 ]; then let COUNTER2=COUNTER2+1;fi
 done
 }
+TestNetwork() {
+if [ $1 == 1 ] 2> /dev/null; then toping="raw.githubusercontent.com"; else toping="aur.archlinux.org"; fi
+msg="aborting"
+if [ $1 == 2 ] 2> /dev/null; then msg="$msg AUR search"; fi; if [ $1 == 3 ] 2> /dev/null; then msg="$msg AUR download"; fi
+wget -q --tries=10 --timeout=20 --spider "https://$toping/"; if [[ ! $? -eq 0 ]]; then echo "$toping is unreachable, $msg..."; exit; fi
+}
 ###
 if [ -z $1 ];
    then
@@ -357,7 +363,7 @@ if [ $1 == "cfg" ];
    fi
 if [ $1 == "u" ];
    then
-	if [ "$2" != "1" ] && [ "$3" != "1" ] 2> /dev/null; then sudo pacman -Syu $2; fi
+	if [ "$2" != "1" ] && [ "$3" != "1" ] 2> /dev/null; then sudo pacman -Syu $2; else sudo echo -n; fi
 	if [ $autoupdate == 1 ];
 	   then
 	   wget -q --tries=10 --timeout=20 --spider https://raw.githubusercontent.com/; if [[ $? -eq 0 ]]; then skippacupdate=0; else skippacupdate=1; echo "raw.githubusercontent.com is unreachable, skipping pac update..."; fi
@@ -479,11 +485,51 @@ if [ $1 == "u" ];
 			      then
 				echo "New update for $packagename found! Installing it..."
 				echo "(current: $versionstring, update: $verrel)"
+				if [[ $(cat $pacfolder/db.txt) == *"$2"* ]];
+				   then
+					pkgcheck=$(grep -rnw "$pacfolder/db.txt" -e "$2")
+					aurdl=$(echo $pkgcheck | cut -d " " -f 2)
+					aurdl2=$(echo $pkgcheck | cut -d " " -f 3)
+					if [ $aurdl2 != $verrel ]; then skipa=1; else skipa=0; fi
+					if [ $skipa == 0 ];
+					   then
+						linedb=$(awk "/$2/{ print NR; exit }" $pacfolder/db.txt)
+						dbdir=$pacfolder/db.txt
+						if [ ! -d $aurdl ] || [ ! -f $aurdl/PKGBUILD ]; then 
+							sed -i "$linedb d" $dbdir
+							skipa=1
+						   fi
+						if [ $skipa == 0 ];
+						   then
+							while true; do
+								echo
+								read -p "Do you wan't to install the previously downloaded $aurdl? If not, a new one will be downloaded. Y(es) or N(o)? " opt
+								case $opt in
+								    y|Y|yes|Yes)
+								      echo "Ok, let's install the downloaded one."
+								      cd $aurdl
+								      if [ $PWD != "$aurdl" ];
+									then
+										echo "Error: can't access the folder! ($aurdl)"
+										exit
+									fi
+								      IPpkgname="$2";IPnoconfirm="$noconfirm";InstallPackage 1
+								      exit
+								      ;;
+								    n|N|no|No)
+								      echo "Ok, a new download will be make for this package!"
+								      break
+								      ;;
+								esac
+							done
+						   fi
+					   fi
+				   fi
 				let updatefound=1
 				rm PKGBUILD
-				if [ -f PKGBUILD ]; then echo "Error: PKGBUILD can't be deleted"; rm -rf $newfolder 2> /dev/null; exit; fi
+				if [ -f PKGBUILD ]; then echo "Error: old PKGBUILD can't be deleted"; rm -rf $newfolder 2> /dev/null; exit; fi
 				git clone https://aur.archlinux.org/$packagename.git
-				if [ $moveaur == 1 ]; then mv $packagename/* $newfolder/$cdtofolder; fi
+				if [ $moveaur == 1 ]; then mv $packagename/.[!.]* $packagename/* $newfolder/$cdtofolder; rm -rf $packagename; fi
 				cd $newfolder/$cdtofolder
 				if [ ! -f PKGBUILD ]; then echo "Error: PKGBUILD doesn't exist!"; rm -rf $newfolder 2> /dev/null; exit; fi
 				if [ $moveaur == 1 ]; then WriteDB $packagename $randomname; fi
@@ -550,7 +596,7 @@ if [ $1 == "s" ];
 		echo -n
 	   else echo "$result" 
 	   fi
-	wget -q --tries=10 --timeout=20 --spider https://aur.archlinux.org/; if [[ ! $? -eq 0 ]]; then echo "aur.archlinux.org is unreachable, aborting AUR search..."; exit; fi
+	TestNetwork 2
 	rpc=$(wget "https://aur.archlinux.org/rpc.php?type=search&arg=$2" -q -O -)
 	resultcount=$(echo "$rpc" | jshon -e resultcount -u)
 	if [ $resultcount == 0 ]; then exit; fi
@@ -667,7 +713,7 @@ if [ $1 == "set" ];
    fi
 if [ $1 == "is" ];
    then
-	wget -q --tries=10 --timeout=20 --spider https://aur.archlinux.org/; if [[ ! $? -eq 0 ]]; then echo "aur.archlinux.org is unreachable, aborting..."; exit; fi
+	TestNetwork
 	newfolder=$tmpdirectory/$RANDOM$RANDOM$RANDOM-pacAUR
 	mkdir $newfolder; cd $newfolder
 	wget https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=$2 -q -O $newfolder/PKGBUILD
@@ -726,7 +772,7 @@ if [ $1 == "aur" ];
 			esac
 		done
 	   fi
-	wget -q --tries=10 --timeout=20 --spider https://aur.archlinux.org/; if [[ ! $? -eq 0 ]]; then echo "aur.archlinux.org is unreachable, aborting AUR download..."; exit; fi
+	TestNetwork 3
 	randomtmp=$RANDOM$RANDOM$RANDOM
 	randomfolder=$tmpdirectory/$randomtmp-pacAUR; mkdir $randomfolder
 	cd $randomfolder
@@ -751,7 +797,7 @@ if [ $1 == "aur" ];
 		    y|Y|yes|Yes)
 		      echo "Ok, the downloaded files will be moved to the cache directory."
 		      mkdir $pacfolder/cache/$randomtmp-$2
-		      mv $randomfolder/$2/* $pacfolder/cache/$randomtmp-$2
+		      mv $randomfolder/$2/.[!.]* $randomfolder/$2/* $pacfolder/cache/$randomtmp-$2
 		      cd $pacfolder/cache/$randomtmp-$2
 		      rm -rf $randomfolder
 		      unset randomfolder
@@ -767,7 +813,7 @@ if [ $1 == "aur" ];
 	IPpkgname="$2";IPpkgdir="$randomfolder";IPrm="rm"; InstallPackage 2
 	exit
    else
-	wget -q --tries=10 --timeout=20 --spider https://aur.archlinux.org/; if [[ ! $? -eq 0 ]]; then echo "aur.archlinux.org is unreachable, aborting AUR download..."; exit; fi
+	TestNetwork 3
 	dirtmp=$(echo $3 | sed 's/\/*$//')
 	cd $dirtmp 2> /dev/null
 	if [ $dirtmp != $PWD ];
