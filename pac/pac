@@ -4,7 +4,7 @@
 # please, credit me if you use my tool, enjoy :D
 # https://github.com/theo546/pac - GPLv3
 
-version="1.0.7_1" # changelog: https://github.com/theo546/pac/blob/master/README.md
+version="1.0.7_2" # changelog: https://github.com/theo546/pac/blob/master/README.md
 log=$HOME/.cache/pac/logs/log-$(date +%Y-%m-%d_%H-%M-%S).txt # log directory
 
 if [ ! -f ~/.cache/pac/pac.config ]; then
@@ -513,7 +513,7 @@ if [ $1 == "u" ];
 										echo "Error: can't access the folder! ($aurdl)"
 										exit
 									fi
-								      IPpkgname="$2";IPnoconfirm="$noconfirm";InstallPackage 1
+								      IPpkgname="$packagename";IPnoconfirm="$noconfirm";InstallPackage 1
 								      exit
 								      ;;
 								    n|N|no|No)
