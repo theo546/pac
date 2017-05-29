@@ -2,8 +2,7 @@
 Pac is an useful tool for Archlinux who interact with Pacman, and can download package from AUR!
 
 ## Installation
-Automatically:
-
+Automatically:<br>
 Use the auto script!
 ```
 Download it here: https://raw.githubusercontent.com/theo546/pac/master/install.sh
@@ -25,6 +24,7 @@ Allow execution: chmod +x /usr/bin/pac
 
 ## Change log
 ### up coming update: 1.0.8 - 1.0.9: 
+adding ignore package list<br>
 adding reliable parser<br>
 adding reliable solver<br>
 adding split packages<br>
