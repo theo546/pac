@@ -30,6 +30,7 @@ adding reliable solver<br>
 adding split packages<br>
 (https://wiki.archlinux.org/index.php/AUR_helpers#Comparison_table)<br>
 <br>
+1.0.7_4 fixed bugs to be ready for next big update<br>
 1.0.7_3 added an option to the question to install previously downloaded package (Abort)<br>
 1.0.7_2 quick fix of a string for the update<br>
 1.0.7_1 fixed a bug with directory, updater now check if an update has been already downloaded, optimized some code<br>
