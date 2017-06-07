@@ -4,7 +4,7 @@
 # please, credit me if you use my tool, enjoy :D
 # https://github.com/theo546/pac - GPLv3
 
-version="1.0.7_3" # changelog: https://github.com/theo546/pac/blob/master/README.md
+version="1.0.7_4" # changelog: https://github.com/theo546/pac/blob/master/README.md
 log=$HOME/.cache/pac/logs/log-$(date +%Y-%m-%d_%H-%M-%S).txt # log directory
 
 if [ ! -f ~/.cache/pac/pac.config ]; then
@@ -131,15 +131,12 @@ if [ ! -f /usr/bin/leafpad ]; then sed -i "s|editor=1|editor=3|g" ~/.cache/pac/p
 if [ ! -f /usr/bin/scite ]; then sed -i "s|editor=2|editor=3|g" ~/.cache/pac/pac.config; . ~/.cache/pac/pac.config; fi
 if [ $editor == 0 ]; then editor1=vim; fi; if [ $editor == 1 ]; then editor1=leafpad; fi
 if [ $editor == 2 ]; then editor1=scite; fi; if [ $editor == 3 ]; then editor1=vi; fi
-# delete temp directory of pac if exist
+# delete temp directory/file of pac if exist
 rm -rf $tmpdirectory/*-pacAUR 2> /dev/null
 # aur function
 IPpkgname="";IPpkgdir="";IPrm="";IPreturn="";IPnoconfirm=""
 function InstallPackage() {
-if [ $1 == 0 ];
-   then
-	echo "An error occurred, please try again."
-   fi
+if [ $1 == 0 ]; then echo "An error occurred, please try again."; fi
 if [ ! -f PKGBUILD ];
    then
 	echo "Error: PKGBUILD doesn't exist!"
@@ -408,6 +405,7 @@ if [ $1 == "u" ];
 	   fi
 	if [ $aurautoupdate == 1 ];
 	   then
+	   if [ ! -s "$pacfolder/pkg.txt" ]; then echo "No AUR package installed, nothing to update..."; exit; fi
 	   wget -q --tries=10 --timeout=20 --spider https://aur.archlinux.org/; if [[ $? -eq 0 ]]; then skipaur=0; else skipaur=1; echo "aur.archlinux.org is unreachable, skipping AUR update..."; fi
 	   if [ $skipaur == 0 ];
 	      then
@@ -453,9 +451,10 @@ if [ $1 == "u" ];
 		CheckDb
 		sleep 0.1
 		numberline=$(wc -l < $pacfolder/pkg.txt)
-		updatefound=0
+		updatefound=0; loop=0
 		for i in $(seq $numberline)
 		do
+		   wget -q --tries=10 --timeout=20 --spider https://aur.archlinux.org/; if [[ $? -eq 0 ]]; then loop=0; else if [ $loop == 1 ]; then break; fi; loop=1; echo "aur.archlinux.org is unreachable, skipping AUR update..."; fi
 		   linepkgstring=$(sed "$i q;d" $pacfolder/pkg.txt)
 		   packagename=$(echo $linepkgstring | cut -d " " -f 1); versionstring=$(echo $linepkgstring | cut -d " " -f 2)
 		   if [ $moveaur == 1 ];
@@ -717,6 +716,11 @@ if [ $1 == "set" ];
    fi
 if [ $1 == "is" ];
    then
+	if [ $2 == ] 2> /dev/null;
+	   then
+		echo "Error: nothing to search."
+		exit
+	   fi
 	TestNetwork
 	newfolder=$tmpdirectory/$RANDOM$RANDOM$RANDOM-pacAUR
 	mkdir $newfolder; cd $newfolder
