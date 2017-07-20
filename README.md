@@ -5,7 +5,7 @@ Pac is an useful tool for Archlinux who interact with Pacman, and can download p
 
 ```
 Open a terminal, then put this command:
-wget -O - https://raw.githubusercontent.com/theo546/pac/master/install.sh | bash
+wget -q -O - https://raw.githubusercontent.com/theo546/pac/master/install.sh | bash
 ```
 
 ### [Change log](https://github.com/theo546/pac/blob/master/CHANGELOG.md)
