@@ -8,6 +8,11 @@ Open a terminal, then put this command:
 wget -q -O - https://raw.githubusercontent.com/theo546/pac/master/install.sh | bash
 ```
 
+### How to use?
+```
+Open a terminal, type 'pac help' to get started!
+```
+
 ### [Change log](https://github.com/theo546/pac/blob/master/CHANGELOG.md)
 
 ## Any problem?
